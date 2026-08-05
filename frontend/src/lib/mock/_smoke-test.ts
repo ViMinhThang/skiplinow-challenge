@@ -80,7 +80,66 @@ async function main() {
     )
   }
 
-  console.log(`\n${passed}/6 checks passed`)
+  // --- Employee CRUD ---
+  const employees = await import("@/lib/mock/employees")
+  const seed = await employees.mockListEmployees()
+  check("list returns seeded employees", seed.length === 3)
+  check("seed has job titles", seed.every((e) => e.role.length > 0))
+  check("seed schedules default correctly", seed[1].schedule.entries.length === 7)
+
+  const created = await employees.mockCreateEmployee({
+    name: "Test Person",
+    phone: "555-0199",
+    email: "test.person@taskflow.local",
+    role: "Manager",
+  })
+  check("create returns new employee", created.role === "Manager" && !created.accountSetup)
+
+  try {
+    await employees.mockCreateEmployee({
+      name: "Dup",
+      phone: "555-0198",
+      email: "test.person@taskflow.local",
+      role: "Staff",
+    })
+    check("duplicate email rejected", false)
+  } catch (e) {
+    check("duplicate email rejected", (e as { status: number }).status === 409)
+  }
+
+  const updated = await employees.mockUpdateEmployee(created.id, {
+    name: "Test Person Jr",
+    phone: "555-0197",
+    role: "Supervisor",
+  })
+  check("update changes fields", updated.name === "Test Person Jr" && updated.role === "Supervisor")
+
+  const schedule = await employees.mockUpdateSchedule(created.id, [
+    { day: "monday", start: "08:00", end: "16:00", enabled: true },
+    { day: "friday", start: "10:00", end: "14:00", enabled: true },
+  ])
+  check("schedule update persists", schedule.entries.filter((e) => e.enabled).length === 2)
+
+  const withSchedule = (await employees.mockListEmployees()).find(
+    (e) => e.id === created.id,
+  )
+  check(
+    "schedule visible in list",
+    withSchedule?.schedule.entries.find((e) => e.day === "monday")?.start === "08:00",
+  )
+
+  await employees.mockDeleteEmployee(created.id)
+  const afterDelete = await employees.mockListEmployees()
+  check("delete removes employee", !afterDelete.some((e) => e.id === created.id))
+
+  try {
+    await employees.mockDeleteEmployee(created.id)
+    check("delete missing employee errors", false)
+  } catch (e) {
+    check("delete missing employee errors", (e as { status: number }).status === 404)
+  }
+
+  console.log(`\n${passed} checks passed`)
   process.exit(process.exitCode ?? 0)
 }
 

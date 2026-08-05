@@ -1,4 +1,4 @@
-import type { UserRole } from "@/types"
+import type { UserRole, WorkSchedule } from "@/types"
 
 const DB_KEY = "taskflow.mockdb"
 
@@ -8,10 +8,11 @@ export interface MockUser {
   name: string
   phone: string
   email?: string
+  jobTitle?: string
   username?: string
   password?: string
   accountSetup?: boolean
-  schedule?: unknown
+  schedule?: WorkSchedule
 }
 
 export interface MockAccessCode {
@@ -48,6 +49,32 @@ export function seedDatabase(): MockDatabase {
         username: "sam",
         password: "secret123",
         accountSetup: true,
+        schedule: {
+          entries: [
+            {
+              day: "monday",
+              start: "09:00",
+              end: "17:00",
+              enabled: true,
+            },
+          ],
+        },
+      },
+      {
+        id: "emp-2",
+        role: "employee",
+        name: "Jordan Lee",
+        phone: "5550102",
+        email: "jordan@taskflow.local",
+        accountSetup: false,
+      },
+      {
+        id: "emp-3",
+        role: "employee",
+        name: "Priya Patel",
+        phone: "5550103",
+        email: "priya@taskflow.local",
+        accountSetup: false,
       },
     ],
     codes: {},

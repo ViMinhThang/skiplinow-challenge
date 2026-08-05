@@ -60,10 +60,13 @@ export interface WorkSchedule {
   entries: WorkScheduleEntry[]
 }
 
-export interface Employee extends User {
-  role: "employee"
+export interface Employee {
+  id: string
+  name: string
   phone: string
   email: string
+  /** Job title, e.g. "Developer". */
+  role: string
   accountSetup: boolean
   schedule: WorkSchedule
   createdAt: string
@@ -76,7 +79,7 @@ export type EmployeeInput = {
   role: string
 }
 
-export type EmployeeUpdateInput = Partial<Omit<EmployeeInput, "role">>
+export type EmployeeUpdateInput = Partial<EmployeeInput>
 
 export type TaskStatus = "todo" | "in_progress" | "done"
 
