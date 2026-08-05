@@ -20,8 +20,11 @@ function getToken(): string | null {
   try {
     const raw = window.localStorage.getItem(AUTH_STORAGE_KEY)
     if (!raw) return null
-    const session = JSON.parse(raw) as AuthSession
-    return session.token ?? null
+    const data = JSON.parse(raw) as {
+      state?: { session?: AuthSession }
+      session?: AuthSession
+    }
+    return data.state?.session?.token ?? data.session?.token ?? null
   } catch {
     return null
   }

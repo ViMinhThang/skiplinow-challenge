@@ -20,6 +20,14 @@ export interface RequestAccessCodeResponse {
   verified?: boolean
 }
 
+/**
+ * Result of requesting an access code. `devCode` is only populated by the
+ * in-browser mock (the real backend sends the code via SMS instead).
+ */
+export type RequestAccessCodeResult = RequestAccessCodeResponse & {
+  devCode?: string
+}
+
 export interface VerifyAccessCodeResponse extends AuthSession {
   message: string
 }

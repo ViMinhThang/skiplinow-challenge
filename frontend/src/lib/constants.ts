@@ -4,6 +4,9 @@ export const API_URL =
 export const SOCKET_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:4000"
 
+/** When true (default), all API calls are served by the in-browser mock. */
+export const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== "false"
+
 export const STORAGE_KEYS = {
   auth: "taskflow.auth",
   phone: "taskflow.phone",
