@@ -8,26 +8,18 @@ import {
   CircleCheckIcon,
   KeyRoundIcon,
   Loader2Icon,
-  ShieldCheckIcon,
   SmartphoneIcon,
-  TriangleAlertIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
+import { FormError } from "@/components/auth/form-error"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { IconInput } from "@/components/ui/icon-input"
 import { Label } from "@/components/ui/label"
+import { USE_MOCK } from "@/lib/constants"
+import { getErrorMessage } from "@/lib/format"
 import { requestAccessCode, verifyAccessCode } from "@/services/auth"
 import { useAuthStore } from "@/stores/auth"
-import { ApiError } from "@/lib/api"
-import { USE_MOCK } from "@/lib/constants"
 
 type Step = "phone" | "code"
 
@@ -41,10 +33,6 @@ export function LoginForm() {
   const [devCode, setDevCode] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  function getErrorMessage(err: unknown): string {
-    return err instanceof ApiError ? err.message : "Something went wrong."
-  }
 
   async function handleRequestCode(event: React.FormEvent) {
     event.preventDefault()
@@ -97,52 +85,38 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldCheckIcon className="size-5" />
-          Owner sign in
-        </CardTitle>
-        <CardDescription>
-          {step === "phone"
-            ? "Enter your registered phone number to receive an access code."
-            : `Enter the 6-digit code sent to ${phone}.`}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {step === "phone" ? (
+    <>
+      <p className="text-sm text-muted-foreground">
+        {step === "phone"
+          ? "Enter your registered phone number to receive an access code."
+          : `Enter the 6-digit code sent to ${phone}.`}
+      </p>
+      {step === "phone" ? (
           <form onSubmit={handleRequestCode} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="phone">Phone number</Label>
-              <div className="relative">
-                <SmartphoneIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder="e.g. 555-0100"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  className="pl-8"
-                  disabled={loading}
-                />
-              </div>
+              <IconInput
+                id="phone"
+                icon={<SmartphoneIcon />}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="e.g. 555-0100"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                disabled={loading}
+              />
             </div>
 
             {USE_MOCK && (
               <p className="text-xs text-muted-foreground">
-                Mock mode: use phone <span className="font-mono">555-0100</span>
-                (registered owner).
+                Mock mode: use phone{" "}
+                <span className="font-semibold">555-0100</span> (registered
+                owner).
               </p>
             )}
 
-            {error && (
-              <p className="flex items-center gap-1.5 text-sm text-destructive">
-                <TriangleAlertIcon className="size-4 shrink-0" />
-                {error}
-              </p>
-            )}
+            {error && <FormError message={error} />}
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
@@ -159,41 +133,34 @@ export function LoginForm() {
           <form onSubmit={handleVerifyCode} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="code">Access code</Label>
-              <div className="relative">
-                <KeyRoundIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="code"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  placeholder="6-digit code"
-                  maxLength={6}
-                  value={code}
-                  onChange={(event) =>
-                    setCode(event.target.value.replace(/\D/g, ""))
-                  }
-                  className="pl-8 font-mono tracking-widest"
-                  disabled={loading}
-                  autoFocus
-                />
-              </div>
+              <IconInput
+                id="code"
+                icon={<KeyRoundIcon />}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="6-digit code"
+                maxLength={6}
+                value={code}
+                onChange={(event) =>
+                  setCode(event.target.value.replace(/\D/g, ""))
+                }
+                className="tracking-widest"
+                disabled={loading}
+                autoFocus
+              />
             </div>
 
             {devCode && (
               <p className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
                 <CircleCheckIcon className="size-3.5 shrink-0 text-success" />
                 Mock SMS: your code is{" "}
-                <span className="font-mono font-semibold text-foreground">
+                <span className="font-semibold text-foreground">
                   {devCode}
                 </span>
               </p>
             )}
 
-            {error && (
-              <p className="flex items-center gap-1.5 text-sm text-destructive">
-                <TriangleAlertIcon className="size-4 shrink-0" />
-                {error}
-              </p>
-            )}
+            {error && <FormError message={error} />}
 
             <div className="flex gap-2">
               <Button
@@ -222,7 +189,6 @@ export function LoginForm() {
             </div>
           </form>
         )}
-      </CardContent>
-    </Card>
+    </>
   )
 }

@@ -2,13 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  ClipboardListIcon,
-  LogOutIcon,
-  MessageSquareIcon,
-  UsersIcon,
-  WorkflowIcon,
-} from "lucide-react"
+import { LogOutIcon, WorkflowIcon } from "lucide-react"
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -19,20 +13,18 @@ import { initials } from "@/lib/format"
 import { useAuthStore, useCurrentUser } from "@/stores/auth"
 import { cn } from "@/lib/utils"
 
-interface NavItem {
+export interface AppNavItem {
   label: string
   href?: string
   icon: React.ComponentType<{ className?: string }>
   disabled?: boolean
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { label: "Employees", href: "/dashboard/employees", icon: UsersIcon },
-  { label: "Chat", href: "/dashboard/chat", icon: MessageSquareIcon },
-  { label: "Tasks", href: "/dashboard/tasks", icon: ClipboardListIcon },
-]
+interface AppSidebarProps {
+  navItems: AppNavItem[]
+}
 
-export function Sidebar() {
+export function AppSidebar({ navItems }: AppSidebarProps) {
   const pathname = usePathname()
   const user = useCurrentUser()
   const logout = useAuthStore((state) => state.logout)
@@ -50,7 +42,7 @@ export function Sidebar() {
       <Separator />
 
       <nav className="flex flex-1 flex-col gap-1 p-2">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const active = item.href === pathname
           return (
             <Button

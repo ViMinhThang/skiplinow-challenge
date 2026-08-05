@@ -3,8 +3,8 @@ import { API_ENDPOINTS, USE_MOCK } from "@/lib/constants"
 import {
   mockCreateEmployee,
   mockDeleteEmployee,
-  mockGetSchedule,
   mockListEmployees,
+  mockResendInvite,
   mockUpdateEmployee,
   mockUpdateSchedule,
 } from "@/lib/mock/employees"
@@ -39,15 +39,19 @@ export async function deleteEmployee(id: string): Promise<{ message: string }> {
   return api.delete<{ message: string }>(API_ENDPOINTS.employee(id))
 }
 
-export async function getSchedule(id: string): Promise<WorkSchedule> {
-  if (USE_MOCK) return mockGetSchedule(id)
-  return api.get<WorkSchedule>(API_ENDPOINTS.employeeSchedule(id))
-}
-
 export async function updateSchedule(
   id: string,
   entries: WorkScheduleEntry[],
 ): Promise<WorkSchedule> {
   if (USE_MOCK) return mockUpdateSchedule(id, entries)
   return api.put<WorkSchedule>(API_ENDPOINTS.employeeSchedule(id), { entries })
+}
+
+export async function resendInvite(
+  id: string,
+): Promise<{ message: string; devLink?: string }> {
+  if (USE_MOCK) return mockResendInvite(id)
+  return api.post<{ message: string }>(API_ENDPOINTS.employee(id), {
+    action: "resend-invite",
+  })
 }

@@ -6,7 +6,7 @@
 
 /* Rosé Pine Dawn (light) */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --background: #faf4ed;
   --foreground: #575279;
   --card: #fffaf3;
@@ -42,41 +42,41 @@
   --warning: #a8791e;
 }
 
-/* Rosé Pine (dark) */
+/* Black & Gold (dark) */
 .dark {
-  --background: #191724;
-  --foreground: #e0def4;
-  --card: #1f1d2e;
-  --card-foreground: #e0def4;
-  --popover: #1f1d2e;
-  --popover-foreground: #e0def4;
-  --primary: #e0def4;
-  --primary-foreground: #191724;
-  --secondary: #26233a;
-  --secondary-foreground: #e0def4;
-  --muted: #26233a;
-  --muted-foreground: #908caa;
-  --accent: #26233a;
-  --accent-foreground: #e0def4;
-  --destructive: #eb6f92;
-  --border: #403d52;
-  --input: #524f67;
-  --ring: #c4a7e7;
-  --chart-1: #9ccfd8;
-  --chart-2: #f6c177;
-  --chart-3: #eb6f92;
-  --chart-4: #c4a7e7;
-  --chart-5: #31748f;
-  --sidebar: #26233a;
-  --sidebar-foreground: #e0def4;
-  --sidebar-primary: #e0def4;
-  --sidebar-primary-foreground: #191724;
-  --sidebar-accent: #313244;
-  --sidebar-accent-foreground: #e0def4;
-  --sidebar-border: #313244;
-  --sidebar-ring: #c4a7e7;
-  --success: #9ccfd8;
-  --warning: #f6c177;
+  --background: #0a0a0a;
+  --foreground: #ede8db;
+  --card: #141210;
+  --card-foreground: #ede8db;
+  --popover: #141210;
+  --popover-foreground: #ede8db;
+  --primary: #c9ab54;
+  --primary-foreground: #1a1200;
+  --secondary: #1e1b14;
+  --secondary-foreground: #ede8db;
+  --muted: #1e1b14;
+  --muted-foreground: #98907d;
+  --accent: #1e1b14;
+  --accent-foreground: #dcc06b;
+  --destructive: #e05c4e;
+  --border: #2e2a1e;
+  --input: #4a4230;
+  --ring: #c9ab54;
+  --chart-1: #c9ab54;
+  --chart-2: #dcc06b;
+  --chart-3: #a98d3a;
+  --chart-4: #7d6a26;
+  --chart-5: #e6d294;
+  --sidebar: #12100c;
+  --sidebar-foreground: #ede8db;
+  --sidebar-primary: #c9ab54;
+  --sidebar-primary-foreground: #1a1200;
+  --sidebar-accent: #1f1c13;
+  --sidebar-accent-foreground: #dcc06b;
+  --sidebar-border: #262217;
+  --sidebar-ring: #c9ab54;
+  --success: #d3b45c;
+  --warning: #f0a35e;
 }
 
 @theme inline {
@@ -117,8 +117,9 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
   --color-warning: var(--warning);
-  --font-heading: var(--font-sans);
-  --font-sans: var(--font-sans);
+  --font-heading: var(--font-poppins);
+  --font-sans: var(--font-poppins);
+  --font-mono: var(--font-poppins);
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
@@ -128,13 +129,24 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-optical-sizing: auto;
+    font-feature-settings: "liga" 1, "calt" 1, "ss01" 1;
+  }
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: inherit;
   }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
-  }
-  html {
-    @apply font-sans;
   }
 }

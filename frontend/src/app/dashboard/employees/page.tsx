@@ -1,20 +1,13 @@
 "use client"
 
 import { useState } from "react"
-import {
-  CalendarDaysIcon,
-  PencilIcon,
-  RefreshCwIcon,
-  Trash2Icon,
-  UserPlusIcon,
-  UsersIcon,
-} from "lucide-react"
+import { UserPlusIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import { DeleteEmployeeDialog } from "@/components/employees/delete-employee-dialog"
 import { EmployeeFormDialog } from "@/components/employees/employee-form-dialog"
+import { EmployeesTable } from "@/components/employees/employees-table"
 import { ScheduleDialog } from "@/components/employees/schedule-dialog"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -23,80 +16,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { useEmployees } from "@/hooks/use-employees"
-import { getErrorMessage, initials } from "@/lib/format"
-import type { Employee, WorkSchedule, WorkScheduleDay } from "@/types"
-
-const DAY_SHORT: Record<WorkScheduleDay, string> = {
-  monday: "Mon",
-  tuesday: "Tue",
-  wednesday: "Wed",
-  thursday: "Thu",
-  friday: "Fri",
-  saturday: "Sat",
-  sunday: "Sun",
-}
-
-function scheduleSummary(schedule: WorkSchedule): string {
-  const active = schedule.entries.filter((entry) => entry.enabled)
-  if (active.length === 0) return "Not set"
-  const labels = active.map((entry) => DAY_SHORT[entry.day])
-  if (labels.length > 3) return `${labels.slice(0, 3).join(" · ")} +${labels.length - 3}`
-  return labels.join(" · ")
-}
-
-function LoadingRows() {
-  return (
-    <>
-      {Array.from({ length: 4 }).map((_, index) => (
-        <TableRow key={index}>
-          <TableCell>
-            <div className="flex items-center gap-3">
-              <Skeleton className="size-8 rounded-full" />
-              <div className="space-y-1">
-                <Skeleton className="h-3 w-28" />
-                <Skeleton className="h-3 w-36" />
-              </div>
-            </div>
-          </TableCell>
-          <TableCell>
-            <Skeleton className="h-3 w-24" />
-          </TableCell>
-          <TableCell>
-            <Skeleton className="h-4 w-16" />
-          </TableCell>
-          <TableCell>
-            <Skeleton className="h-4 w-16" />
-          </TableCell>
-          <TableCell>
-            <Skeleton className="h-3 w-20" />
-          </TableCell>
-          <TableCell>
-            <Skeleton className="h-7 w-24" />
-          </TableCell>
-        </TableRow>
-      ))}
-    </>
-  )
-}
+  useEmployees,
+  useResendInvite,
+} from "@/hooks/use-employees"
+import { getErrorMessage } from "@/lib/format"
+import type { Employee } from "@/types"
 
 export default function EmployeesPage() {
   const { data: employees, isLoading, isError, error, refetch } = useEmployees()
+  const resendInviteMutation = useResendInvite()
   const [formOpen, setFormOpen] = useState(false)
   const [formEmployee, setFormEmployee] = useState<Employee | null>(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteEmployee, setDeleteEmployee] = useState<Employee | null>(null)
   const [scheduleOpen, setScheduleOpen] = useState(false)
   const [scheduleEmployee, setScheduleEmployee] = useState<Employee | null>(null)
+  const [resendingId, setResendingId] = useState<string | null>(null)
 
   function openCreate() {
     setFormEmployee(null)
@@ -116,6 +52,18 @@ export default function EmployeesPage() {
   function openSchedule(employee: Employee) {
     setScheduleEmployee(employee)
     setScheduleOpen(true)
+  }
+
+  async function handleResendInvite(employee: Employee) {
+    setResendingId(employee.id)
+    try {
+      const result = await resendInviteMutation.mutateAsync(employee.id)
+      toast.success(result.message)
+    } catch (err) {
+      toast.error(getErrorMessage(err))
+    } finally {
+      setResendingId(null)
+    }
   }
 
   return (
@@ -141,125 +89,19 @@ export default function EmployeesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Schedule</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && <LoadingRows />}
-
-              {!isLoading && isError && (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <div className="flex flex-col items-center gap-3 py-8 text-center">
-                      <p className="text-sm text-destructive">
-                        {getErrorMessage(error)}
-                      </p>
-                      <Button variant="outline" onClick={() => refetch()}>
-                        <RefreshCwIcon />
-                        Try again
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!isLoading && !isError && employees?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6}>
-                    <div className="flex flex-col items-center gap-3 py-10 text-center">
-                      <UsersIcon className="size-8 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        No employees yet. Add your first team member.
-                      </p>
-                      <Button variant="outline" onClick={openCreate}>
-                        <UserPlusIcon />
-                        Add employee
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!isLoading &&
-                !isError &&
-                employees?.map((employee) => (
-                  <TableRow key={employee.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="size-8">
-                          <AvatarFallback className="text-xs">
-                            {initials(employee.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{employee.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {employee.email}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {employee.phone}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{employee.role}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {employee.accountSetup ? (
-                        <Badge className="bg-success/10 text-success">
-                          Active
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-warning/10 text-warning">
-                          Pending
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {scheduleSummary(employee.schedule)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => openEdit(employee)}
-                          aria-label={`Edit ${employee.name}`}
-                        >
-                          <PencilIcon />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => openSchedule(employee)}
-                          aria-label={`Set schedule for ${employee.name}`}
-                        >
-                          <CalendarDaysIcon />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => openDelete(employee)}
-                          aria-label={`Delete ${employee.name}`}
-                        >
-                          <Trash2Icon />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
+          <EmployeesTable
+            employees={employees}
+            isLoading={isLoading}
+            isError={isError}
+            error={error}
+            resendingId={resendingId}
+            onRetry={() => refetch()}
+            onAdd={openCreate}
+            onEdit={openEdit}
+            onSchedule={openSchedule}
+            onDelete={openDelete}
+            onResendInvite={handleResendInvite}
+          />
         </CardContent>
       </Card>
 

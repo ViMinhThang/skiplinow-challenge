@@ -16,28 +16,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getErrorMessage } from "@/lib/format"
+import { DAY_LONG, WEEK_DAYS } from "@/lib/schedule"
 import { useUpdateSchedule } from "@/hooks/use-employees"
 import type { Employee, WorkScheduleDay, WorkScheduleEntry } from "@/types"
-
-const DAY_ORDER: WorkScheduleDay[] = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-]
-
-const DAY_LABELS: Record<WorkScheduleDay, string> = {
-  monday: "Monday",
-  tuesday: "Tuesday",
-  wednesday: "Wednesday",
-  thursday: "Thursday",
-  friday: "Friday",
-  saturday: "Saturday",
-  sunday: "Sunday",
-}
 
 interface ScheduleDialogProps {
   open: boolean
@@ -48,7 +29,7 @@ interface ScheduleDialogProps {
 function ScheduleFields({ employee }: { employee: Employee }) {
   const [entries, setEntries] = useState<WorkScheduleEntry[]>(
     () =>
-      DAY_ORDER.map((day) => {
+      WEEK_DAYS.map((day) => {
         const existing = employee.schedule.entries.find(
           (entry) => entry.day === day,
         )
@@ -77,7 +58,7 @@ function ScheduleFields({ employee }: { employee: Employee }) {
     )
     if (invalid) {
       setError(
-        `${DAY_LABELS[invalid.day]}: start time must be before end time.`,
+        `${DAY_LONG[invalid.day]}: start time must be before end time.`,
       )
       return
     }
@@ -113,29 +94,29 @@ function ScheduleFields({ employee }: { employee: Employee }) {
               htmlFor={`day-${entry.day}`}
               className="w-24 shrink-0 cursor-pointer font-medium"
             >
-              {DAY_LABELS[entry.day]}
+              {DAY_LONG[entry.day]}
             </Label>
             <div className="flex flex-1 items-center gap-2">
               <Input
                 type="time"
                 value={entry.start}
                 disabled={!entry.enabled}
-                aria-label={`${DAY_LABELS[entry.day]} start time`}
+                aria-label={`${DAY_LONG[entry.day]} start time`}
                 onChange={(event) =>
                   updateEntry(entry.day, { start: event.target.value })
                 }
-                className="h-7"
+                className="h-8"
               />
               <span className="text-muted-foreground">–</span>
               <Input
                 type="time"
                 value={entry.end}
                 disabled={!entry.enabled}
-                aria-label={`${DAY_LABELS[entry.day]} end time`}
+                aria-label={`${DAY_LONG[entry.day]} end time`}
                 onChange={(event) =>
                   updateEntry(entry.day, { end: event.target.value })
                 }
-                className="h-7"
+                className="h-8"
               />
             </div>
           </div>

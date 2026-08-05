@@ -13,7 +13,3 @@ export function initials(name: string): string {
     .join("")
     .toUpperCase()
 }
-
-export function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}

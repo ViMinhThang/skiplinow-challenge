@@ -1,41 +1,22 @@
 import { ApiError } from "@/lib/api"
-import { delay, getDatabase, persistDatabase } from "@/lib/mock/db"
+import {
+  createInvite,
+  delay,
+  findEmployeeById,
+  getDatabase,
+  persistDatabase,
+} from "@/lib/mock/db"
+import { defaultSchedule } from "@/lib/schedule"
 import type {
   Employee,
   EmployeeInput,
   EmployeeUpdateInput,
   WorkSchedule,
   WorkScheduleEntry,
-  WorkScheduleDay,
 } from "@/types"
+import type { MockUser } from "@/lib/mock/db"
 
-const DAYS: WorkScheduleDay[] = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-]
-
-export function defaultSchedule(): WorkSchedule {
-  return {
-    entries: DAYS.map((day) => ({
-      day,
-      start: "09:00",
-      end: "17:00",
-      enabled: false,
-    })),
-  }
-}
-
-function toEmployee(
-  db: ReturnType<typeof getDatabase>,
-  id: string,
-): Employee {
-  const user = db.users.find((u) => u.id === id)
-  if (!user) throw new ApiError(404, "Employee not found.")
+function toEmployee(user: MockUser): Employee {
   return {
     id: user.id,
     name: user.name,
@@ -48,13 +29,38 @@ function toEmployee(
   }
 }
 
+function assertEmailAvailable(
+  db: ReturnType<typeof getDatabase>,
+  email: string,
+  exceptId?: string,
+): void {
+  const duplicate = db.users.some(
+    (user) =>
+      user.id !== exceptId && user.email?.toLowerCase() === email,
+  )
+  if (duplicate) {
+    throw new ApiError(409, "An employee with this email already exists.")
+  }
+}
+
+function requireEmployee(
+  db: ReturnType<typeof getDatabase>,
+  id: string,
+): MockUser {
+  const user = findEmployeeById(db, id)
+  if (!user) throw new ApiError(404, "Employee not found.")
+  return user
+}
+
 export async function mockListEmployees(): Promise<Employee[]> {
   await delay(250)
   const db = getDatabase()
-  return db.users
-    .filter((user) => user.role === "employee")
-    .map((user) => toEmployee(db, user.id))
-    .sort((a, b) => a.name.localeCompare(b.name))
+  const employees: Employee[] = []
+  for (const user of db.users) {
+    if (user.role !== "employee") continue
+    employees.push(toEmployee(user))
+  }
+  return employees.sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export async function mockCreateEmployee(
@@ -64,14 +70,10 @@ export async function mockCreateEmployee(
   const db = getDatabase()
 
   const email = input.email.trim().toLowerCase()
-  if (
-    db.users.some((user) => user.email?.toLowerCase() === email)
-  ) {
-    throw new ApiError(409, "An employee with this email already exists.")
-  }
+  assertEmailAvailable(db, email)
 
   const id = `emp-${Date.now().toString(36)}`
-  db.users.push({
+  const user: MockUser = {
     id,
     role: "employee",
     name: input.name.trim(),
@@ -79,16 +81,39 @@ export async function mockCreateEmployee(
     email,
     jobTitle: input.role.trim(),
     accountSetup: false,
-  })
+  }
+  db.users.push(user)
   persistDatabase(db)
 
   // Mock "invite email": the real backend sends a setup link to this address.
-  const token = `invite-${id}-${Math.random().toString(36).slice(2, 10)}`
+  const token = createInvite(db, id)
   console.info(
     `[mock-email] Invite sent to ${email}: set up your account at http://localhost:3000/setup?token=${token}`,
   )
 
-  return toEmployee(db, id)
+  return toEmployee(user)
+}
+
+export async function mockResendInvite(
+  id: string,
+): Promise<{ message: string; devLink: string }> {
+  await delay()
+  const db = getDatabase()
+  const user = requireEmployee(db, id)
+  if (user.accountSetup) {
+    throw new ApiError(409, "This employee has already set up their account.")
+  }
+
+  const token = createInvite(db, id)
+  persistDatabase(db)
+  const devLink = `http://localhost:3000/setup?token=${token}`
+  console.info(
+    `[mock-email] Invite re-sent to ${user.email}: ${devLink}`,
+  )
+  return {
+    message: `Invite email re-sent to ${user.email}.`,
+    devLink,
+  }
 }
 
 export async function mockUpdateEmployee(
@@ -97,20 +122,10 @@ export async function mockUpdateEmployee(
 ): Promise<Employee> {
   await delay()
   const db = getDatabase()
-  const user = db.users.find((u) => u.id === id)
-  if (!user || user.role !== "employee") {
-    throw new ApiError(404, "Employee not found.")
-  }
+  const user = requireEmployee(db, id)
 
   const email = input.email?.trim().toLowerCase()
-  if (
-    email &&
-    db.users.some(
-      (u) => u.id !== id && u.email?.toLowerCase() === email,
-    )
-  ) {
-    throw new ApiError(409, "An employee with this email already exists.")
-  }
+  if (email) assertEmailAvailable(db, email, id)
 
   if (input.name) user.name = input.name.trim()
   if (input.phone) user.phone = input.phone.trim()
@@ -118,7 +133,7 @@ export async function mockUpdateEmployee(
   if (input.role) user.jobTitle = input.role.trim()
   persistDatabase(db)
 
-  return toEmployee(db, id)
+  return toEmployee(user)
 }
 
 export async function mockDeleteEmployee(
@@ -135,24 +150,13 @@ export async function mockDeleteEmployee(
   return { message: "Employee removed." }
 }
 
-export async function mockGetSchedule(
-  id: string,
-): Promise<WorkSchedule> {
-  await delay(200)
-  const db = getDatabase()
-  const user = db.users.find((u) => u.id === id)
-  if (!user) throw new ApiError(404, "Employee not found.")
-  return user.schedule ?? defaultSchedule()
-}
-
 export async function mockUpdateSchedule(
   id: string,
   entries: WorkScheduleEntry[],
 ): Promise<WorkSchedule> {
   await delay()
   const db = getDatabase()
-  const user = db.users.find((u) => u.id === id)
-  if (!user) throw new ApiError(404, "Employee not found.")
+  const user = requireEmployee(db, id)
   user.schedule = { entries }
   persistDatabase(db)
   return user.schedule

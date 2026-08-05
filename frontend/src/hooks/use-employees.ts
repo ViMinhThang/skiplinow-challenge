@@ -6,16 +6,31 @@ import {
   createEmployee,
   deleteEmployee,
   listEmployees,
+  resendInvite,
   updateEmployee,
   updateSchedule,
 } from "@/services/employees"
 import type {
+  Employee,
   EmployeeInput,
   EmployeeUpdateInput,
+  WorkSchedule,
   WorkScheduleEntry,
 } from "@/types"
 
 const EMPLOYEES_KEY = ["employees"] as const
+
+function useInvalidatingMutation<TArgs, TResult>(
+  mutationFn: (args: TArgs) => Promise<TResult>,
+) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY })
+    },
+  })
+}
 
 export function useEmployees() {
   return useQuery({
@@ -25,48 +40,33 @@ export function useEmployees() {
 }
 
 export function useCreateEmployee() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (input: EmployeeInput) => createEmployee(input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY })
-    },
-  })
+  return useInvalidatingMutation<EmployeeInput, Employee>((input) =>
+    createEmployee(input),
+  )
 }
 
 export function useUpdateEmployee() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, input }: { id: string; input: EmployeeUpdateInput }) =>
-      updateEmployee(id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY })
-    },
-  })
+  return useInvalidatingMutation<
+    { id: string; input: EmployeeUpdateInput },
+    Employee
+  >(({ id, input }) => updateEmployee(id, input))
 }
 
 export function useDeleteEmployee() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => deleteEmployee(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY })
-    },
-  })
+  return useInvalidatingMutation<string, { message: string }>((id) =>
+    deleteEmployee(id),
+  )
 }
 
 export function useUpdateSchedule() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({
-      id,
-      entries,
-    }: {
-      id: string
-      entries: WorkScheduleEntry[]
-    }) => updateSchedule(id, entries),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: EMPLOYEES_KEY })
-    },
-  })
+  return useInvalidatingMutation<
+    { id: string; entries: WorkScheduleEntry[] },
+    WorkSchedule
+  >(({ id, entries }) => updateSchedule(id, entries))
+}
+
+export function useResendInvite() {
+  return useInvalidatingMutation<string, { message: string; devLink?: string }>(
+    (id) => resendInvite(id),
+  )
 }

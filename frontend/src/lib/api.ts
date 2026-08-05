@@ -46,15 +46,16 @@ async function request<T>(
     headers,
   })
 
-  const body = await response.json().catch(() => null)
-
   if (!response.ok) {
+    const body = await response.json().catch(() => null)
     const message =
       (body && typeof body === "object" && "message" in body && body.message
         ? String(body.message)
         : null) ?? `Request failed with status ${response.status}`
     throw new ApiError(response.status, message, body)
   }
+
+  const body = await response.json().catch(() => null)
 
   return body as T
 }

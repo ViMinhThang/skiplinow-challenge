@@ -1,15 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import {
-  Loader2Icon,
-  MailIcon,
-  SmartphoneIcon,
-  TagIcon,
-  UserIcon,
-} from "lucide-react"
+import { Loader2Icon, MailIcon, SmartphoneIcon, UserIcon } from "lucide-react"
 import { toast } from "sonner"
 
+import { FormError } from "@/components/auth/form-error"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -19,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
+import { IconInput } from "@/components/ui/icon-input"
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -86,6 +81,7 @@ function FormFields({
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
+    if (loading) return
     setError(null)
     const validationError = validate()
     if (validationError) {
@@ -107,55 +103,48 @@ function FormFields({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="employee-name">Name</Label>
-        <div className="relative">
-          <UserIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="employee-name">Name</Label>
+          <IconInput
             id="employee-name"
+            icon={<UserIcon />}
             placeholder="Full name"
             value={form.name}
             onChange={(event) => set("name", event.target.value)}
-            className="pl-8"
           />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="employee-phone">Phone number</Label>
-        <div className="relative">
-          <SmartphoneIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <div className="space-y-2">
+          <Label htmlFor="employee-phone">Phone number</Label>
+          <IconInput
             id="employee-phone"
+            icon={<SmartphoneIcon />}
             type="tel"
             placeholder="e.g. 555-0101"
             value={form.phone}
             onChange={(event) => set("phone", event.target.value)}
-            className="pl-8"
           />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="employee-email">Email</Label>
-        <div className="relative">
-          <MailIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <div className="space-y-2">
+          <Label htmlFor="employee-email">Email</Label>
+          <IconInput
             id="employee-email"
+            icon={<MailIcon />}
             type="email"
             placeholder="name@company.com"
             value={form.email}
             onChange={(event) => set("email", event.target.value)}
-            className="pl-8"
           />
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="employee-role">Role</Label>
-        <div className="flex items-center gap-2">
-          <TagIcon className="size-4 shrink-0 text-muted-foreground" />
-          <Select value={form.role} onValueChange={(value) => set("role", value)}>
+        <div className="space-y-2">
+          <Label htmlFor="employee-role">Role</Label>
+          <Select
+            value={form.role}
+            onValueChange={(value) => set("role", value)}
+          >
             <SelectTrigger id="employee-role" className="w-full">
               <SelectValue placeholder="Select a role" />
             </SelectTrigger>
@@ -170,7 +159,7 @@ function FormFields({
         </div>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <FormError message={error} />}
 
       <DialogFooter>
         <Button type="submit" disabled={loading}>
@@ -194,7 +183,7 @@ export function EmployeeFormDialog({
 }: EmployeeFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
             {employee ? "Edit employee" : "Add employee"}
