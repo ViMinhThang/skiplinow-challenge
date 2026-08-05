@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Loader2Icon } from "lucide-react"
 
 import { LoginForm } from "@/components/auth/login-form"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuthStore } from "@/stores/auth"
 
 export default function LoginPage() {
@@ -26,7 +27,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="fixed top-4 right-4">
+        <ThemeToggle />
+      </div>
       <LoginForm />
     </main>
   )

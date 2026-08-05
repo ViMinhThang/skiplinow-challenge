@@ -215,11 +215,11 @@ export default function EmployeesPage() {
                     </TableCell>
                     <TableCell>
                       {employee.accountSetup ? (
-                        <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <Badge className="bg-success/10 text-success">
                           Active
                         </Badge>
                       ) : (
-                        <Badge className="bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <Badge className="bg-warning/10 text-warning">
                           Pending
                         </Badge>
                       )}

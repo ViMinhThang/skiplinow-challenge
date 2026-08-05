@@ -179,8 +179,8 @@ export function LoginForm() {
             </div>
 
             {devCode && (
-              <p className="flex items-center gap-1.5 rounded-md border border-dashed bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
-                <CircleCheckIcon className="size-3.5 shrink-0 text-emerald-500" />
+              <p className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
+                <CircleCheckIcon className="size-3.5 shrink-0 text-success" />
                 Mock SMS: your code is{" "}
                 <span className="font-mono font-semibold text-foreground">
                   {devCode}

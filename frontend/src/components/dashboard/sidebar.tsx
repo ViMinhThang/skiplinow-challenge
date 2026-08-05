@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { initials } from "@/lib/format"
 import { useAuthStore, useCurrentUser } from "@/stores/auth"
 import { cn } from "@/lib/utils"
@@ -37,10 +38,13 @@ export function Sidebar() {
   const logout = useAuthStore((state) => state.logout)
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r bg-sidebar">
+    <aside className="flex h-screen w-64 shrink-0 flex-col bg-sidebar">
       <div className="flex items-center gap-2 px-4 py-4">
         <WorkflowIcon className="size-5 text-primary" />
         <span className="font-heading text-sm font-semibold">TaskFlow</span>
+        <span className="ml-auto">
+          <ThemeToggle />
+        </span>
       </div>
 
       <Separator />
@@ -52,9 +56,11 @@ export function Sidebar() {
             <Button
               key={item.label}
               asChild
-              variant={active ? "secondary" : "ghost"}
+              variant="ghost"
               className={cn(
                 "justify-start",
+                active &&
+                  "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent",
                 item.disabled && "pointer-events-none opacity-50",
               )}
             >

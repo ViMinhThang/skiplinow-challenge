@@ -98,7 +98,7 @@ function ScheduleFields({ employee }: { employee: Employee }) {
         {entries.map((entry) => (
           <div
             key={entry.day}
-            className="flex items-center gap-3 rounded-lg border p-2.5"
+            className="flex items-center gap-3 rounded-lg bg-muted/50 p-2.5"
           >
             <input
               type="checkbox"
