@@ -1,5 +1,5 @@
 import { randomAlphanumeric, randomDigits } from "@/lib/random"
-import type { UserRole, WorkSchedule } from "@/types"
+import type { Task, UserRole, WorkSchedule } from "@/types"
 
 const DB_KEY = "taskflow.mockdb"
 
@@ -31,6 +31,7 @@ export interface MockDatabase {
   codes: Record<string, MockAccessCode>
   tokens: Record<string, { userId: string }>
   invites: Record<string, MockInvite>
+  tasks: Task[]
 }
 
 export function normalizePhone(phone: string): string {
@@ -110,6 +111,40 @@ export function seedDatabase(): MockDatabase {
     codes: {},
     tokens: {},
     invites: {},
+    tasks: [
+      {
+        id: "task-1",
+        title: "Design onboarding checklist",
+        description: "Draft a checklist for new employee onboarding.",
+        status: "todo",
+        assigneeId: "emp-1",
+        createdBy: "owner-1",
+        dueDate: "2026-08-14",
+        createdAt: "2026-08-01T09:00:00.000Z",
+        updatedAt: "2026-08-01T09:00:00.000Z",
+      },
+      {
+        id: "task-2",
+        title: "Review work schedule app",
+        description: "Sanity-check the schedule editor before rollout.",
+        status: "in_progress",
+        assigneeId: "emp-2",
+        createdBy: "owner-1",
+        dueDate: "2026-08-10",
+        createdAt: "2026-08-02T10:30:00.000Z",
+        updatedAt: "2026-08-04T14:00:00.000Z",
+      },
+      {
+        id: "task-3",
+        title: "Prepare team retro notes",
+        status: "done",
+        assigneeId: "emp-3",
+        createdBy: "owner-1",
+        dueDate: "2026-08-05",
+        createdAt: "2026-07-28T08:00:00.000Z",
+        updatedAt: "2026-08-05T16:45:00.000Z",
+      },
+    ],
   }
 }
 

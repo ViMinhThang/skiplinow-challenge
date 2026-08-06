@@ -102,6 +102,10 @@ export type TaskInput = {
   dueDate?: string
 }
 
+export type TaskUpdateInput = Partial<TaskInput> & {
+  status?: TaskStatus
+}
+
 export interface ChatMessage {
   id: string
   conversationId: string
