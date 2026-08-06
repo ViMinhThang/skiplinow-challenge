@@ -8,7 +8,6 @@ import {
 import type {
   Task,
   TaskInput,
-  TaskStatus,
   TaskUpdateInput,
 } from "@/types"
 
@@ -16,7 +15,7 @@ function nowIso(): string {
   return new Date().toISOString()
 }
 
-function toTaskId(db: ReturnType<typeof getDatabase>): string {
+function toTaskId(): string {
   return `task-${Date.now().toString(36)}`
 }
 
@@ -50,7 +49,7 @@ export async function mockCreateTask(input: TaskInput): Promise<Task> {
 
   const now = nowIso()
   const task: Task = {
-    id: toTaskId(db),
+    id: toTaskId(),
     title,
     description: input.description?.trim() || undefined,
     status: "todo",
@@ -98,8 +97,4 @@ export async function mockDeleteTask(id: string): Promise<{ message: string }> {
   db.tasks.splice(index, 1)
   persistDatabase(db)
   return { message: "Task removed." }
-}
-
-export function isValidTaskStatus(value: string): value is TaskStatus {
-  return value === "todo" || value === "in_progress" || value === "done"
 }

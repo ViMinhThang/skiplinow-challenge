@@ -14,8 +14,8 @@ import {
 
 const NAV_ITEMS: AppNavItem[] = [
   { label: "Employees", href: "/dashboard/employees", icon: UsersIcon },
-  { label: "Chat", href: "/dashboard/chat", icon: MessageSquareIcon },
   { label: "Tasks", href: "/dashboard/tasks", icon: ClipboardListIcon },
+  { label: "Chat", href: "/dashboard/chat", icon: MessageSquareIcon },
 ]
 
 export default function DashboardLayout({

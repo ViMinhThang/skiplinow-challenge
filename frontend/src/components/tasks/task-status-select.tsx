@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 import {
@@ -27,10 +27,12 @@ export function TaskStatusSelect({
 }) {
   const updateMutation = useUpdateTask()
   const [status, setStatus] = useState(task.status)
+  const [prevStatus, setPrevStatus] = useState(task.status)
 
-  useEffect(() => {
+  if (prevStatus !== task.status) {
+    setPrevStatus(task.status)
     setStatus(task.status)
-  }, [task.status])
+  }
 
   function handleChange(value: string) {
     const next = value as Task["status"]

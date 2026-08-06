@@ -14,7 +14,12 @@ import {
 
 const NAV_ITEMS: AppNavItem[] = [
   { label: "Tasks", href: "/workspace/tasks", icon: ClipboardListIcon },
-  { label: "Profile", href: "/workspace/profile", icon: UserCogIcon },
+  {
+    label: "Profile",
+    href: "/workspace/profile",
+    icon: UserCogIcon,
+    disabled: true,
+  },
   { label: "Chat", href: "/workspace/chat", icon: MessageSquareIcon },
 ]
 

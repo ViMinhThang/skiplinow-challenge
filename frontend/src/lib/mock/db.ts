@@ -1,5 +1,5 @@
 import { randomAlphanumeric, randomDigits } from "@/lib/random"
-import type { Task, UserRole, WorkSchedule } from "@/types"
+import type { Conversation, Task, UserRole, WorkSchedule } from "@/types"
 
 const DB_KEY = "taskflow.mockdb"
 
@@ -32,6 +32,7 @@ export interface MockDatabase {
   tokens: Record<string, { userId: string }>
   invites: Record<string, MockInvite>
   tasks: Task[]
+  conversations: Conversation[]
 }
 
 export function normalizePhone(phone: string): string {
@@ -143,6 +144,54 @@ export function seedDatabase(): MockDatabase {
         dueDate: "2026-08-05",
         createdAt: "2026-07-28T08:00:00.000Z",
         updatedAt: "2026-08-05T16:45:00.000Z",
+      },
+    ],
+    conversations: [
+      {
+        id: "conv-1",
+        participantIds: ["owner-1", "emp-1"],
+        lastMessageAt: "2026-08-06T08:12:00.000Z",
+        messages: [
+          {
+            id: "msg-1",
+            conversationId: "conv-1",
+            senderId: "owner-1",
+            recipientId: "emp-1",
+            content: "Morning Sam! Quick question about the onboarding checklist.",
+            createdAt: "2026-08-06T07:58:00.000Z",
+          },
+          {
+            id: "msg-2",
+            conversationId: "conv-1",
+            senderId: "emp-1",
+            recipientId: "owner-1",
+            content: "Morning! Sure, what do you need?",
+            createdAt: "2026-08-06T08:05:00.000Z",
+          },
+          {
+            id: "msg-3",
+            conversationId: "conv-1",
+            senderId: "owner-1",
+            recipientId: "emp-1",
+            content: "Can you add a security training section to the checklist?",
+            createdAt: "2026-08-06T08:12:00.000Z",
+          },
+        ],
+      },
+      {
+        id: "conv-2",
+        participantIds: ["owner-1", "emp-2"],
+        lastMessageAt: "2026-08-05T16:20:00.000Z",
+        messages: [
+          {
+            id: "msg-4",
+            conversationId: "conv-2",
+            senderId: "emp-2",
+            recipientId: "owner-1",
+            content: "Schedule review is done, looks good to roll out.",
+            createdAt: "2026-08-05T16:20:00.000Z",
+          },
+        ],
       },
     ],
   }

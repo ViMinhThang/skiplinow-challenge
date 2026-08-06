@@ -121,3 +121,12 @@ export interface Conversation {
   messages: ChatMessage[]
   lastMessageAt?: string
 }
+
+export interface ConversationParticipant {
+  id: string
+  name: string
+}
+
+export interface ConversationView extends Conversation {
+  participants: ConversationParticipant[]
+}
