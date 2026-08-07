@@ -21,14 +21,6 @@ export interface WorkSchedule {
   entries: WorkScheduleEntry[]
 }
 
-export function isEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-}
-
-export function isPhone(value: string): boolean {
-  return /^\d{7,15}$/.test(value.replace(/\D/g, ""))
-}
-
 export function isWorkScheduleDay(value: string): value is WorkScheduleDay {
   return (WEEK_DAYS as readonly string[]).includes(value)
 }

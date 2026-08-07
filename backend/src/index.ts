@@ -1,9 +1,13 @@
 import "dotenv/config"
 
+import { createServer } from "node:http"
+
 import { createApp } from "./app.js"
 import { config } from "./config.js"
 import { firebaseReady, initFirebase } from "./firebase.js"
 import { ensureOwner } from "./services/owners.js"
+import { attachChatSocket } from "./sockets/chat-events.js"
+import { createChatSocket } from "./sockets/chat-socket.js"
 
 initFirebase()
 ensureOwner().catch((err) => {
@@ -11,7 +15,10 @@ ensureOwner().catch((err) => {
 })
 
 const app = createApp()
-const server = app.listen(config.port, () => {
+const server = createServer(app)
+attachChatSocket(createChatSocket(server))
+
+server.listen(config.port, () => {
   console.log(
     `[server] listening on http://localhost:${config.port} (${config.devMode ? "dev mode" : "production"}, firebase: ${firebaseReady() ? "ready" : "not configured"})`,
   )
@@ -23,5 +30,3 @@ function shutdown(): void {
 
 process.on("SIGINT", shutdown)
 process.on("SIGTERM", shutdown)
-
-

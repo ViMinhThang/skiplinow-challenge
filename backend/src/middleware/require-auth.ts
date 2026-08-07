@@ -1,6 +1,11 @@
-import type { NextFunction, Request, RequestHandler, Response } from "express"
+import type {
+  NextFunction,
+  Request,
+  RequestHandler,
+  Response,
+} from "express"
 
-import { HttpError } from "../app.js"
+import { HttpError } from "../errors/http-error.js"
 import { verifyToken, type AuthUser } from "../services/tokens.js"
 
 declare module "express-serve-static-core" {
@@ -9,9 +14,7 @@ declare module "express-serve-static-core" {
   }
 }
 
-export function requireAuth(
-  role?: AuthUser["role"],
-): RequestHandler {
+export function requireAuth(role?: AuthUser["role"]): RequestHandler {
   return (req: Request, _res: Response, next: NextFunction) => {
     const header = req.headers.authorization ?? ""
     const token = header.startsWith("Bearer ") ? header.slice(7) : ""
@@ -29,3 +32,7 @@ export function requireAuth(
   }
 }
 
+export function getAuthUser(req: Request): AuthUser {
+  if (!req.user) throw new HttpError(401, "Authentication required.")
+  return req.user
+}

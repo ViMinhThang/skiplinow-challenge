@@ -30,17 +30,6 @@ export const DAY_LONG: Record<WorkScheduleDay, string> = {
   sunday: "Sunday",
 }
 
-export function defaultSchedule(): WorkSchedule {
-  return {
-    entries: WEEK_DAYS.map((day) => ({
-      day,
-      start: "09:00",
-      end: "17:00",
-      enabled: false,
-    })),
-  }
-}
-
 export function scheduleSummary(schedule: WorkSchedule): string {
   const active = schedule.entries.filter((entry) => entry.enabled)
   if (active.length === 0) return "Not set"

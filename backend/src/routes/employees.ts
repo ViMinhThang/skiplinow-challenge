@@ -1,7 +1,6 @@
 import { Router } from "express"
 
-import { HttpError } from "../app.js"
-import { asyncHandler } from "../middleware/async-handler.js"
+import { HttpError } from "../errors/http-error.js"
 import { requireAuth } from "../middleware/require-auth.js"
 import {
   createEmployee,
@@ -12,92 +11,60 @@ import {
   updateEmployee,
   updateSchedule,
 } from "../services/employees.js"
+import { readString } from "../utils/http.js"
 
 export const employeesRouter: Router = Router()
 
 employeesRouter.use(requireAuth())
 
-employeesRouter.get(
-  "/",
-  asyncHandler(async (_req, res) => {
-    res.json(await listEmployees())
-  }),
-)
+employeesRouter.get("/", async (_req, res) => {
+  res.json(await listEmployees())
+})
 
-employeesRouter.post(
-  "/",
-  requireAuth("owner"),
-  asyncHandler(async (req, res) => {
-    const input = req.body ?? {}
-    const employee = await createEmployee({
-      name: input.name,
-      phone: input.phone,
-      email: input.email,
-      role: input.role ?? input.department,
-    })
-    res.status(201).json(employee)
-  }),
-)
+employeesRouter.post("/", requireAuth("owner"), async (req, res) => {
+  const input = req.body ?? {}
+  const employee = await createEmployee({
+    name: readString(input, "name"),
+    phone: readString(input, "phone"),
+    email: readString(input, "email"),
+    role: readString(input, "role") || readString(input, "department"),
+  })
+  res.status(201).json(employee)
+})
 
-employeesRouter.post(
-  "/get",
-  requireAuth("owner"),
-  asyncHandler(async (req, res) => {
-    const employeeId =
-      typeof req.body?.employeeId === "string" ? req.body.employeeId : ""
-    res.json(await getEmployee(employeeId))
-  }),
-)
+employeesRouter.post("/get", requireAuth("owner"), async (req, res) => {
+  res.json(await getEmployee(readString(req.body, "employeeId")))
+})
 
-employeesRouter.get(
-  "/:id",
-  asyncHandler(async (req, res) => {
-    res.json(await getEmployee(String(req.params.id ?? "")))
-  }),
-)
+employeesRouter.get("/:id", async (req, res) => {
+  res.json(await getEmployee(String(req.params.id ?? "")))
+})
 
-employeesRouter.patch(
-  "/:id",
-  requireAuth("owner"),
-  asyncHandler(async (req, res) => {
-    const input = req.body ?? {}
-    res.json(
-      await updateEmployee(String(req.params.id ?? ""), {
-        name: input.name,
-        phone: input.phone,
-        email: input.email,
-        role: input.role,
-      }),
-    )
-  }),
-)
+employeesRouter.patch("/:id", requireAuth("owner"), async (req, res) => {
+  const input = req.body ?? {}
+  res.json(
+    await updateEmployee(String(req.params.id ?? ""), {
+      name: readString(input, "name") || undefined,
+      phone: readString(input, "phone") || undefined,
+      email: readString(input, "email") || undefined,
+      role: readString(input, "role") || undefined,
+    }),
+  )
+})
 
-employeesRouter.delete(
-  "/:id",
-  requireAuth("owner"),
-  asyncHandler(async (req, res) => {
-    res.json(await deleteEmployee(String(req.params.id ?? "")))
-  }),
-)
+employeesRouter.delete("/:id", requireAuth("owner"), async (req, res) => {
+  res.json(await deleteEmployee(String(req.params.id ?? "")))
+})
 
-employeesRouter.put(
-  "/:id/schedule",
-  requireAuth("owner"),
-  asyncHandler(async (req, res) => {
-    const entries = req.body?.entries
-    res.json(await updateSchedule(String(req.params.id ?? ""), entries))
-  }),
-)
+employeesRouter.put("/:id/schedule", requireAuth("owner"), async (req, res) => {
+  res.json(
+    await updateSchedule(String(req.params.id ?? ""), req.body?.entries),
+  )
+})
 
-employeesRouter.post(
-  "/:id",
-  requireAuth("owner"),
-  asyncHandler(async (req, res) => {
-    if (req.body?.action === "resend-invite") {
-      res.json(await resendInvite(String(req.params.id ?? "")))
-      return
-    }
+employeesRouter.post("/:id", requireAuth("owner"), async (req, res) => {
+  if (req.body?.action !== "resend-invite") {
     throw new HttpError(400, "Unknown action.")
-  }),
-)
-
+  }
+  res.json(await resendInvite(String(req.params.id ?? "")))
+})

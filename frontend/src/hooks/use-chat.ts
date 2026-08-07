@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useInvalidatingMutation } from "@/hooks/use-invalidating-mutation"
@@ -9,9 +10,9 @@ import {
   listConversations,
   sendMessage,
 } from "@/services/chat"
-import type { ConversationView } from "@/types"
-
-export const CHAT_POLL_INTERVAL = 2000
+import { useAuthStore } from "@/stores/auth"
+import { disconnectChatSocket, getChatSocket } from "@/lib/socket"
+import type { ChatMessage, ConversationView } from "@/types"
 
 const CONVERSATIONS_KEY = ["conversations"] as const
 
@@ -19,12 +20,48 @@ function messagesKey(conversationId: string) {
   return ["messages", conversationId] as const
 }
 
+interface ChatMessagePayload {
+  conversationId?: string
+  message?: ChatMessage
+}
+
+export function useChatRealtime(): void {
+  const token = useAuthStore((state) => state.session?.token)
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    if (!token) {
+      disconnectChatSocket()
+      return
+    }
+    const socket = getChatSocket(token)
+
+    const handleMessage = (payload: ChatMessagePayload) => {
+      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY })
+      if (payload?.conversationId) {
+        queryClient.invalidateQueries({
+          queryKey: messagesKey(payload.conversationId),
+        })
+      }
+    }
+    const handleNewConversation = () => {
+      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY })
+    }
+
+    socket.on("chat:message", handleMessage)
+    socket.on("chat:new", handleNewConversation)
+    return () => {
+      socket.off("chat:message", handleMessage)
+      socket.off("chat:new", handleNewConversation)
+    }
+  }, [token, queryClient])
+}
+
 export function useConversations(userId?: string | null) {
   return useQuery({
     queryKey: CONVERSATIONS_KEY,
-    queryFn: () => listConversations(userId as string),
+    queryFn: () => listConversations(),
     enabled: Boolean(userId),
-    refetchInterval: CHAT_POLL_INTERVAL,
   })
 }
 
@@ -34,9 +71,8 @@ export function useMessages(
 ) {
   return useQuery({
     queryKey: messagesKey(conversationId ?? ""),
-    queryFn: () => getMessages(conversationId as string, userId as string),
+    queryFn: () => getMessages(conversationId as string),
     enabled: Boolean(conversationId && userId),
-    refetchInterval: CHAT_POLL_INTERVAL,
   })
 }
 
@@ -45,13 +81,11 @@ export function useSendMessage() {
   return useMutation({
     mutationFn: ({
       conversationId,
-      senderId,
       content,
     }: {
       conversationId: string
-      senderId: string
       content: string
-    }) => sendMessage(conversationId, senderId, content),
+    }) => sendMessage(conversationId, content),
     onSuccess: (_message, { conversationId }) => {
       queryClient.invalidateQueries({ queryKey: CONVERSATIONS_KEY })
       queryClient.invalidateQueries({ queryKey: messagesKey(conversationId) })

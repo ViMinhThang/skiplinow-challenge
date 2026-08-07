@@ -80,7 +80,7 @@ export function ConversationList({
 }: ConversationListProps) {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b p-4">
+      <div className="flex items-center justify-between p-4">
         <h2 className="text-sm font-semibold">Conversations</h2>
         {headerAction}
       </div>
@@ -118,7 +118,7 @@ export function ConversationList({
                 type="button"
                 onClick={() => onSelect(conversation)}
                 className={cn(
-                  "flex w-full items-center gap-3 border-b px-4 py-3 text-left transition-colors hover:bg-muted/60",
+                  "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/60",
                   active && "bg-sidebar-accent hover:bg-sidebar-accent",
                 )}
               >

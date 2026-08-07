@@ -1,6 +1,8 @@
 import { getAdapter } from "../db.js"
-import { HttpError } from "../app.js"
-import { getEmployeeRecord } from "./employees.js"
+import { HttpError } from "../errors/http-error.js"
+import { generateId } from "../utils/id.js"
+import { findEmployeeById } from "./employees.js"
+import type { AuthUser } from "./tokens.js"
 
 const TASKS_COLLECTION = "tasks"
 
@@ -33,10 +35,6 @@ export interface TaskUpdateInput {
   status?: TaskStatus
 }
 
-function toId(): string {
-  return `task-${Date.now().toString(36)}`
-}
-
 function isStatus(value: unknown): value is TaskStatus {
   return value === "todo" || value === "in_progress" || value === "done"
 }
@@ -64,9 +62,14 @@ async function findRecord(id: string): Promise<TaskRecord | null> {
 async function listRecords(): Promise<TaskRecord[]> {
   const db = getAdapter()
   const records = await db.list(TASKS_COLLECTION)
-  return records
-    .map(toTask)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  return records.map(toTask).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
+async function requireAssignee(assigneeId: string): Promise<void> {
+  const assignee = await findEmployeeById(assigneeId)
+  if (!assignee) {
+    throw new HttpError(400, "Assignee must be an existing employee.")
+  }
 }
 
 export async function listTasks(): Promise<TaskRecord[]> {
@@ -77,23 +80,19 @@ export async function createTask(
   input: TaskInput,
   createdBy: string,
 ): Promise<TaskRecord> {
-  const title = input.title?.trim() ?? ""
+  const title = input.title.trim()
   if (!title) throw new HttpError(400, "Task title is required.")
   if (!input.assigneeId) throw new HttpError(400, "Please choose an assignee.")
-
-  const assignee = await getEmployeeRecord(input.assigneeId)
-  if (!assignee) {
-    throw new HttpError(400, "Assignee must be an existing employee.")
-  }
+  await requireAssignee(input.assigneeId)
 
   const db = getAdapter()
   const now = new Date().toISOString()
   const task: TaskRecord = {
-    id: toId(),
+    id: generateId("task"),
     title,
     description: input.description?.trim() || undefined,
     status: "todo",
-    assigneeId: assignee.id,
+    assigneeId: input.assigneeId,
     createdBy,
     dueDate: input.dueDate || undefined,
     createdAt: now,
@@ -106,23 +105,31 @@ export async function createTask(
 export async function updateTask(
   id: string,
   input: TaskUpdateInput,
-  actor: { id: string; role: "owner" | "employee" },
+  actor: AuthUser,
 ): Promise<TaskRecord> {
   const task = await findRecord(id)
   if (!task) throw new HttpError(404, "Task not found.")
 
-  const isAssignee = task.assigneeId === actor.id
-  if (actor.role !== "owner" && !isAssignee) {
-    throw new HttpError(403, "You can only update your own tasks.")
-  }
-  if (actor.role !== "owner" && input.title !== undefined) {
-    throw new HttpError(403, "Only the owner can edit task details.")
+  if (actor.role !== "owner") {
+    if (task.assigneeId !== actor.id) {
+      throw new HttpError(403, "You can only update your own tasks.")
+    }
+    const hasDetailEdits = [
+      input.title,
+      input.description,
+      input.assigneeId,
+      input.dueDate,
+    ].some((value) => value !== undefined)
+    if (hasDetailEdits) {
+      throw new HttpError(403, "Only the owner can edit task details.")
+    }
   }
 
   const next: TaskRecord = { ...task }
   if (input.title !== undefined) {
-    if (!input.title.trim()) throw new HttpError(400, "Task title is required.")
-    next.title = input.title.trim()
+    const title = input.title.trim()
+    if (!title) throw new HttpError(400, "Task title is required.")
+    next.title = title
   }
   if (input.description !== undefined) {
     next.description = input.description.trim() || undefined
@@ -132,11 +139,8 @@ export async function updateTask(
     next.status = input.status
   }
   if (input.assigneeId !== undefined) {
-    const assignee = await getEmployeeRecord(input.assigneeId)
-    if (!assignee) {
-      throw new HttpError(400, "Assignee must be an existing employee.")
-    }
-    next.assigneeId = assignee.id
+    await requireAssignee(input.assigneeId)
+    next.assigneeId = input.assigneeId
   }
   if (input.dueDate !== undefined) {
     next.dueDate = input.dueDate || undefined

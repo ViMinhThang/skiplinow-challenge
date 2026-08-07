@@ -1,5 +1,9 @@
 import { getAdapter } from "../db.js"
-import { normalizeKey } from "./access-codes.js"
+import { config } from "../config.js"
+import { normalizePhone } from "../utils/phone.js"
+import { generateId } from "../utils/id.js"
+
+export const OWNER_ID = "owner-1"
 
 export interface OwnerRecord {
   id: string
@@ -31,24 +35,25 @@ export async function ensureOwner(): Promise<void> {
   const existing = await db.list(OWNERS_COLLECTION)
   if (existing.length > 0) return
 
-  const name = process.env.OWNER_NAME ?? "Alex Owner"
-  const phone = process.env.OWNER_PHONE ?? "555-0100"
-  await db.set(OWNERS_COLLECTION, "owner-1", {
-    id: "owner-1",
+  const { name, phone } = config.owner
+  await db.set(OWNERS_COLLECTION, OWNER_ID, {
+    id: OWNER_ID,
     name,
     phone,
-    phoneNormalized: normalizeKey(phone),
+    phoneNormalized: normalizePhone(phone),
     role: "owner",
     createdAt: new Date().toISOString(),
   })
   console.log(`[seed] owner created: ${name} (${phone})`)
 }
 
-export async function findOwnerByPhone(phone: string): Promise<OwnerRecord | null> {
+export async function findOwnerByPhone(
+  phone: string,
+): Promise<OwnerRecord | null> {
   const db = getAdapter()
-  const normalized = normalizeKey(phone)
-  const existing = await db.list(OWNERS_COLLECTION)
-  const owner = existing.find((o) => o.phoneNormalized === normalized)
+  const normalized = normalizePhone(phone)
+  const owners = await db.list(OWNERS_COLLECTION)
+  const owner = owners.find((record) => record.phoneNormalized === normalized)
   return owner ? toOwner(owner) : null
 }
 
@@ -57,4 +62,3 @@ export async function findOwnerById(id: string): Promise<OwnerRecord | null> {
   const record = await db.get(OWNERS_COLLECTION, id)
   return record ? toOwner(record) : null
 }
-

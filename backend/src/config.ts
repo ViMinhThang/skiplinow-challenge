@@ -12,6 +12,10 @@ export const config = {
   devMode: (process.env.DEV_MODE ?? "true") !== "false",
   firebaseServiceAccount: process.env.FIREBASE_SERVICE_ACCOUNT ?? "",
   appUrl: process.env.APP_URL ?? "http://localhost:3000",
+  owner: {
+    name: process.env.OWNER_NAME ?? "Thang",
+    phone: process.env.OWNER_PHONE ?? "+84356176054",
+  },
   jwtSecret: process.env.JWT_SECRET ?? "insecure-dev-secret",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   twilio: {

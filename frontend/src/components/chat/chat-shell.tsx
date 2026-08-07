@@ -8,6 +8,7 @@ import { ConversationThread } from "@/components/chat/conversation-thread"
 import { NewConversationDialog } from "@/components/chat/new-conversation-dialog"
 import { Button } from "@/components/ui/button"
 import {
+  useChatRealtime,
   useConversations,
   useMessages,
 } from "@/hooks/use-chat"
@@ -22,6 +23,7 @@ function nowIso(): string {
 
 export function ChatShell({ canStart }: { canStart: boolean }) {
   const user = useCurrentUser()
+  useChatRealtime()
   const employeesQuery = useEmployees()
   const conversationsQuery = useConversations(user?.id)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -68,7 +70,7 @@ export function ChatShell({ canStart }: { canStart: boolean }) {
 
   return (
     <div className="flex h-[calc(100vh-9.5rem)] flex-col gap-4 md:flex-row">
-      <div className="flex h-72 flex-col overflow-hidden rounded-lg border bg-card md:h-auto md:w-80 md:shrink-0">
+      <div className="flex h-72 flex-col overflow-hidden rounded-xl bg-secondary md:h-auto md:w-80 md:shrink-0">
         <ConversationList
           conversations={conversationsQuery.data}
           currentUserId={user?.id ?? ""}
@@ -94,7 +96,7 @@ export function ChatShell({ canStart }: { canStart: boolean }) {
         />
       </div>
 
-      <div className="min-h-72 flex-1 overflow-hidden rounded-lg border bg-card">
+      <div className="min-h-72 flex-1 overflow-hidden rounded-xl bg-card shadow-sm">
         <ConversationThread
           conversation={selected}
           currentUserId={user?.id ?? ""}

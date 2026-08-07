@@ -99,7 +99,6 @@ export function ConversationThread({
     try {
       await sendMutation.mutateAsync({
         conversationId: conversation.id,
-        senderId: currentUserId,
         content: body,
       })
     } catch (err) {
@@ -122,7 +121,7 @@ export function ConversationThread({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b p-4">
+      <div className="flex items-center gap-3 bg-muted/50 p-4">
         <Avatar className="size-9">
           <AvatarFallback>{initials(other?.name ?? "?")}</AvatarFallback>
         </Avatar>
@@ -173,7 +172,7 @@ export function ConversationThread({
 
       <form
         onSubmit={handleSend}
-        className="flex items-center gap-2 border-t p-3"
+        className="flex items-center gap-2 bg-muted/50 p-3"
       >
         <input
           value={draft}

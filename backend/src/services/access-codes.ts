@@ -1,7 +1,7 @@
 import { randomInt } from "node:crypto"
-import bcrypt from "bcryptjs"
 
 import { getAdapter } from "../db.js"
+import { hashValue, verifyValue } from "../utils/crypto.js"
 
 export const CODE_TTL_MS = 10 * 60 * 1000
 const MAX_ATTEMPTS = 5
@@ -11,19 +11,14 @@ export function generateAccessCode(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, "0")
 }
 
-export function normalizeKey(value: string): string {
-  return value.replace(/\D/g, "")
-}
-
 export async function saveAccessCode(
   key: string,
   code: string,
 ): Promise<void> {
   const db = getAdapter()
-  const codeHash = await bcrypt.hash(code, 10)
   await db.set(ACCESS_CODES_COLLECTION, key, {
     id: key,
-    codeHash,
+    codeHash: await hashValue(code),
     attempts: 0,
     expiresAt: Date.now() + CODE_TTL_MS,
   })
@@ -47,7 +42,7 @@ export async function verifyAccessCode(
     return false
   }
 
-  const matches = await bcrypt.compare(code, record.codeHash)
+  const matches = await verifyValue(code, record.codeHash)
   if (!matches) {
     await db.update(ACCESS_CODES_COLLECTION, key, {
       attempts: (typeof record.attempts === "number" ? record.attempts : 0) + 1,
@@ -58,4 +53,3 @@ export async function verifyAccessCode(
   await db.remove(ACCESS_CODES_COLLECTION, key)
   return true
 }
-

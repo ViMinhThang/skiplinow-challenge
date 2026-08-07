@@ -2,24 +2,14 @@ import cors from "cors"
 import express from "express"
 import helmet from "helmet"
 import morgan from "morgan"
-import type { NextFunction, Request, Response } from "express"
 
 import { config } from "./config.js"
+import { errorHandler, notFoundHandler } from "./middleware/errors.js"
 import { authRouter } from "./routes/auth.js"
+import { conversationsRouter } from "./routes/conversations.js"
 import { employeesRouter } from "./routes/employees.js"
 import { healthRouter } from "./routes/health.js"
-
-export class HttpError extends Error {
-  status: number
-  details?: unknown
-
-  constructor(status: number, message: string, details?: unknown) {
-    super(message)
-    this.name = "HttpError"
-    this.status = status
-    this.details = details
-  }
-}
+import { tasksRouter } from "./routes/tasks.js"
 
 export function createApp() {
   const app = express()
@@ -40,28 +30,11 @@ export function createApp() {
   app.use("/api", healthRouter)
   app.use("/api/auth", authRouter)
   app.use("/api/employees", employeesRouter)
+  app.use("/api/tasks", tasksRouter)
+  app.use("/api/conversations", conversationsRouter)
 
-  app.use((_req, res) => {
-    res.status(404).json({ message: "Route not found." })
-  })
-
-  app.use(
-    (
-      err: unknown,
-      _req: Request,
-      res: Response,
-      _next: NextFunction,
-    ) => {
-      if (err instanceof HttpError) {
-        res.status(err.status).json({ message: err.message, ...(err.details !== undefined ? { details: err.details } : {}) })
-        return
-      }
-      const message = err instanceof Error ? err.message : "Internal server error."
-      console.error(message)
-      res.status(500).json({ message: "Internal server error." })
-    },
-  )
+  app.use(notFoundHandler)
+  app.use(errorHandler)
 
   return app
 }
-

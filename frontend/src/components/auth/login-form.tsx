@@ -16,7 +16,6 @@ import { FormError } from "@/components/auth/form-error"
 import { Button } from "@/components/ui/button"
 import { IconInput } from "@/components/ui/icon-input"
 import { Label } from "@/components/ui/label"
-import { USE_MOCK } from "@/lib/constants"
 import { getErrorMessage } from "@/lib/format"
 import { requestAccessCode, verifyAccessCode } from "@/services/auth"
 import { useAuthStore } from "@/stores/auth"
@@ -108,14 +107,6 @@ export function LoginForm() {
               />
             </div>
 
-            {USE_MOCK && (
-              <p className="text-xs text-muted-foreground">
-                Mock mode: use phone{" "}
-                <span className="font-semibold">555-0100</span> (registered
-                owner).
-              </p>
-            )}
-
             {error && <FormError message={error} />}
 
             <Button type="submit" className="w-full" disabled={loading}>
@@ -153,7 +144,7 @@ export function LoginForm() {
             {devCode && (
               <p className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
                 <CircleCheckIcon className="size-3.5 shrink-0 text-success" />
-                Mock SMS: your code is{" "}
+                Dev SMS: your code is{" "}
                 <span className="font-semibold text-foreground">
                   {devCode}
                 </span>
