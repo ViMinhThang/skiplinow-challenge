@@ -3,8 +3,12 @@ import "dotenv/config"
 import { createApp } from "./app.js"
 import { config } from "./config.js"
 import { firebaseReady, initFirebase } from "./firebase.js"
+import { ensureOwner } from "./services/owners.js"
 
 initFirebase()
+ensureOwner().catch((err) => {
+  console.error("[seed] failed to ensure owner:", err)
+})
 
 const app = createApp()
 const server = app.listen(config.port, () => {
@@ -19,4 +23,5 @@ function shutdown(): void {
 
 process.on("SIGINT", shutdown)
 process.on("SIGTERM", shutdown)
+
 

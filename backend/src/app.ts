@@ -5,6 +5,7 @@ import morgan from "morgan"
 import type { NextFunction, Request, Response } from "express"
 
 import { config } from "./config.js"
+import { authRouter } from "./routes/auth.js"
 import { healthRouter } from "./routes/health.js"
 
 export class HttpError extends Error {
@@ -36,6 +37,7 @@ export function createApp() {
   }
 
   app.use("/api", healthRouter)
+  app.use("/api/auth", authRouter)
 
   app.use((_req, res) => {
     res.status(404).json({ message: "Route not found." })

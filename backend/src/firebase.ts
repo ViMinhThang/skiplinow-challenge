@@ -33,7 +33,7 @@ export function firebaseReady(): boolean {
   return db !== null
 }
 
-export function getDb(): Firestore {
+export function getFirestoreDb(): Firestore {
   if (!db) {
     initFirebase()
     if (!db) {
@@ -42,4 +42,5 @@ export function getDb(): Firestore {
   }
   return db
 }
+
 
