@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer"
+﻿import nodemailer from "nodemailer"
 
 import { config } from "../config.js"
 
@@ -26,7 +26,7 @@ async function send(
   devLink?: string,
 ): Promise<EmailResult> {
   if (config.devMode) {
-    console.log(`[email:dev] to ${to} — ${subject}\n${text}`)
+    console.log(`[email:dev] to ${to} â€” ${subject}\n${text}`)
     return { sent: false, ...(devLink ? { devLink } : {}) }
   }
 
@@ -52,11 +52,11 @@ export function sendInviteEmail(
   const link = `${config.appUrl}/setup?token=${token}`
   return send(
     to,
-    "Set up your TaskFlow account",
+    "Set up your Tasked account",
     [
       `Hi ${name},`,
       "",
-      "An account has been created for you on TaskFlow.",
+      "An account has been created for you on Tasked.",
       "Click the link below to choose your username and password:",
       "",
       link,
@@ -73,8 +73,8 @@ export function sendAccessCodeEmail(
 ): Promise<EmailResult> {
   return send(
     to,
-    "Your TaskFlow access code",
-    `Your TaskFlow access code is ${code}. It expires in 10 minutes.`,
+    "Your Tasked access code",
+    `Your Tasked access code is ${code}. It expires in 10 minutes.`,
   )
 }
 

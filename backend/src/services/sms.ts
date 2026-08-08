@@ -1,4 +1,4 @@
-import twilio from "twilio"
+﻿import twilio from "twilio"
 
 import { config } from "../config.js"
 
@@ -46,7 +46,7 @@ export async function sendAccessCodeSms(
       await client.messages.create({
         to: phone,
         from: config.twilio.from,
-        body: `Your TaskFlow access code is ${code}. It expires in 10 minutes.`,
+        body: `Your Tasked access code is ${code}. It expires in 10 minutes.`,
       })
     }
     return { sent: true }

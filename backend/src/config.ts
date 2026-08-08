@@ -1,4 +1,4 @@
-const port = Number(process.env.PORT ?? 4000)
+﻿const port = Number(process.env.PORT ?? 4000)
 const nodeEnv = process.env.NODE_ENV ?? "development"
 const corsOrigins = (process.env.CORS_ORIGIN ?? "http://localhost:3000")
   .split(",")
@@ -30,6 +30,6 @@ export const config = {
     port: Number(process.env.SMTP_PORT ?? 587),
     user: process.env.SMTP_USER ?? "",
     pass: process.env.SMTP_PASS ?? "",
-    from: process.env.EMAIL_FROM ?? "TaskFlow <no-reply@example.com>",
+    from: process.env.EMAIL_FROM ?? "Tasked <no-reply@example.com>",
   },
 } as const
