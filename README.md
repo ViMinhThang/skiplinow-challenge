@@ -104,3 +104,25 @@ npm run lint         # run ESLint
 - Employees receive an invite email with a setup link, then set a username and password. They can also log in with an email access code.
 - Chat uses Socket.IO with token-based authentication on the socket handshake.
 - The database adapter lives in `backend/src/db.ts`. When Firebase is configured it uses Firestore; otherwise it falls back to an in-memory store in dev mode.
+
+## Screenshots
+
+![Screenshot 1](screenshots/Screenshot%202026-08-09%20003848.png)
+
+![Screenshot 2](screenshots/Screenshot%202026-08-09%20003915.png)
+
+![Screenshot 3](screenshots/Screenshot%202026-08-09%20003934.png)
+
+![Screenshot 4](screenshots/Screenshot%202026-08-09%20003946.png)
+
+![Screenshot 5](screenshots/Screenshot%202026-08-09%20004007.png)
+
+![Screenshot 6](screenshots/Screenshot%202026-08-09%20004041.png)
+
+![Screenshot 7](screenshots/Screenshot%202026-08-09%20004059.png)
+
+![Screenshot 8](screenshots/Screenshot%202026-08-09%20004109.png)
+
+![Screenshot 9](screenshots/Screenshot%202026-08-09%20004118.png)
+
+![Screenshot 10](screenshots/Screenshot%202026-08-09%20004128.png)
