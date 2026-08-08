@@ -10,12 +10,15 @@ export const STORAGE_KEYS = {
 } as const
 
 export const API_ENDPOINTS = {
-  requestAccessCode: "/auth/request-code",
-  verifyAccessCode: "/auth/verify-code",
+  requestAccessCode: "/auth/create-new-access-code",
+  verifyAccessCode: "/auth/validate-access-code",
   login: "/auth/login",
   setupAccount: "/auth/setup",
   me: "/auth/me",
   employees: "/employees",
+  createEmployee: "/employees/create-employee",
+  getEmployee: "/employees/get-employee",
+  deleteEmployee: "/employees/delete-employee",
   employee: (id: string) => `/employees/${id}`,
   employeeSchedule: (id: string) => `/employees/${id}/schedule`,
   tasks: "/tasks",

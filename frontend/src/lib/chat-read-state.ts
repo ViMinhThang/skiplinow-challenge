@@ -1,3 +1,5 @@
+import { readStateSchema } from "@/lib/schemas"
+
 const KEY = "taskflow.chat.readState"
 
 type ReadState = Record<string, Record<string, string>>
@@ -5,7 +7,10 @@ type ReadState = Record<string, Record<string, string>>
 function load(): ReadState {
   if (typeof window === "undefined") return {}
   try {
-    return JSON.parse(window.localStorage.getItem(KEY) ?? "{}") as ReadState
+    const parsed = readStateSchema.safeParse(
+      JSON.parse(window.localStorage.getItem(KEY) ?? "{}"),
+    )
+    return parsed.success ? parsed.data : {}
   } catch {
     return {}
   }

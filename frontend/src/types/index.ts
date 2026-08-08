@@ -1,105 +1,83 @@
-export type UserRole = "owner" | "employee"
+import type { z } from "zod"
 
-export interface User {
-  id: string
-  role: UserRole
-  name: string
-  phone: string
-  email?: string
-  username?: string
-}
+import type {
+  authSessionSchema,
+  chatMessageSchema,
+  conversationViewSchema,
+  employeeSchema,
+  loginResponseSchema,
+  requestAccessCodeResultSchema,
+  setupAccountResponseSchema,
+  taskSchema,
+  taskStatusSchema,
+  userRoleSchema,
+  userSchema,
+  userUpdateResponseSchema,
+  verifyAccessCodeResponseSchema,
+  workScheduleDaySchema,
+  workScheduleEntrySchema,
+  workScheduleSchema,
+} from "@/lib/schemas"
 
-export interface AuthSession {
-  token: string
-  user: User
-}
+export type UserRole = z.infer<typeof userRoleSchema>
 
-export interface RequestAccessCodeResponse {
-  message: string
-  /** Whether the phone number is a registered owner. */
-  verified?: boolean
-}
+export type User = z.infer<typeof userSchema>
+
+export type AuthSession = z.infer<typeof authSessionSchema>
+
+export type RequestAccessCodeResponse = Omit<
+  z.infer<typeof requestAccessCodeResultSchema>,
+  "devCode"
+>
 
 /**
- * Result of requesting an access code. `devCode` is only populated by the
- * in-browser mock (the real backend sends the code via SMS instead).
+ * Result of requesting an access code. `devCode` is only populated in dev
+ * mode (the real backend sends the code via SMS instead).
  */
-export type RequestAccessCodeResult = RequestAccessCodeResponse & {
-  devCode?: string
-}
+export type RequestAccessCodeResult = z.infer<
+  typeof requestAccessCodeResultSchema
+>
 
-export interface VerifyAccessCodeResponse extends AuthSession {
-  message: string
-}
+export type VerifyAccessCodeResponse = z.infer<
+  typeof verifyAccessCodeResponseSchema
+>
 
-export interface LoginResponse extends AuthSession {
-  message: string
-}
+export type LoginResponse = z.infer<typeof loginResponseSchema>
+
+export type SetupAccountResponse = z.infer<typeof setupAccountResponseSchema>
+
+export type UserUpdateResponse = z.infer<typeof userUpdateResponseSchema>
+
+export type WorkScheduleDay = z.infer<typeof workScheduleDaySchema>
+
+export type WorkScheduleEntry = z.infer<typeof workScheduleEntrySchema>
+
+export type WorkSchedule = z.infer<typeof workScheduleSchema>
+
+export type Employee = z.infer<typeof employeeSchema>
+
+export type TaskStatus = z.infer<typeof taskStatusSchema>
+
+export type Task = z.infer<typeof taskSchema>
+
+export type ChatMessage = z.infer<typeof chatMessageSchema>
+
+export type Conversation = Omit<
+  z.infer<typeof conversationViewSchema>,
+  "participants"
+>
+
+export type ConversationView = z.infer<typeof conversationViewSchema>
 
 export type UserUpdateInput = Partial<Pick<User, "name" | "phone" | "email">>
 
-export interface UserUpdateResponse {
-  user: User
-}
-
-export interface SetupAccountResponse {
-  message: string
-}
-
-export type WorkScheduleDay =
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday"
-
-export interface WorkScheduleEntry {
-  day: WorkScheduleDay
-  start: string
-  end: string
-  enabled: boolean
-}
-
-export interface WorkSchedule {
-  entries: WorkScheduleEntry[]
-}
-
-export interface Employee {
-  id: string
-  name: string
-  phone: string
-  email: string
-  /** Job title, e.g. "Developer". */
-  role: string
-  accountSetup: boolean
-  schedule: WorkSchedule
-  createdAt: string
-}
-
 export type EmployeeInput = {
   name: string
-  phone: string
   email: string
-  role: string
+  department: string
 }
 
 export type EmployeeUpdateInput = Partial<EmployeeInput>
-
-export type TaskStatus = "todo" | "in_progress" | "done"
-
-export interface Task {
-  id: string
-  title: string
-  description?: string
-  status: TaskStatus
-  assigneeId: string
-  createdBy: string
-  dueDate?: string
-  createdAt: string
-  updatedAt: string
-}
 
 export type TaskInput = {
   title: string
@@ -110,29 +88,4 @@ export type TaskInput = {
 
 export type TaskUpdateInput = Partial<TaskInput> & {
   status?: TaskStatus
-}
-
-export interface ChatMessage {
-  id: string
-  conversationId: string
-  senderId: string
-  recipientId: string
-  content: string
-  createdAt: string
-}
-
-export interface Conversation {
-  id: string
-  participantIds: string[]
-  messages: ChatMessage[]
-  lastMessageAt?: string
-}
-
-export interface ConversationParticipant {
-  id: string
-  name: string
-}
-
-export interface ConversationView extends Conversation {
-  participants: ConversationParticipant[]
 }

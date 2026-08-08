@@ -1,6 +1,7 @@
 import { getAdapter } from "../db.js"
 import { HttpError } from "../errors/http-error.js"
 import { generateId } from "../utils/id.js"
+import { taskRecordSchema } from "../validation/schemas.js"
 import { findEmployeeById } from "./employees.js"
 import type { AuthUser } from "./tokens.js"
 
@@ -35,22 +36,22 @@ export interface TaskUpdateInput {
   status?: TaskStatus
 }
 
-function isStatus(value: unknown): value is TaskStatus {
-  return value === "todo" || value === "in_progress" || value === "done"
+function parseTaskRecord(input: unknown): TaskRecord {
+  const parsed = taskRecordSchema.safeParse(input)
+  if (!parsed.success) {
+    throw new HttpError(
+      400,
+      parsed.error.issues[0]?.message ?? "Invalid task data.",
+    )
+  }
+  return parsed.data
 }
 
-function toTask(record: { id: string; [key: string]: unknown }): TaskRecord {
-  return {
-    id: record.id,
-    title: String(record.title ?? ""),
-    description: record.description ? String(record.description) : undefined,
-    status: isStatus(record.status) ? record.status : "todo",
-    assigneeId: String(record.assigneeId ?? ""),
-    createdBy: String(record.createdBy ?? ""),
-    dueDate: record.dueDate ? String(record.dueDate) : undefined,
-    createdAt: String(record.createdAt ?? new Date().toISOString()),
-    updatedAt: String(record.updatedAt ?? new Date().toISOString()),
-  }
+function toTask(record: {
+  id: string
+  [key: string]: unknown
+}): TaskRecord {
+  return taskRecordSchema.parse(record)
 }
 
 async function findRecord(id: string): Promise<TaskRecord | null> {
@@ -80,24 +81,22 @@ export async function createTask(
   input: TaskInput,
   createdBy: string,
 ): Promise<TaskRecord> {
-  const title = input.title.trim()
-  if (!title) throw new HttpError(400, "Task title is required.")
-  if (!input.assigneeId) throw new HttpError(400, "Please choose an assignee.")
   await requireAssignee(input.assigneeId)
 
-  const db = getAdapter()
   const now = new Date().toISOString()
-  const task: TaskRecord = {
+  const task = parseTaskRecord({
     id: generateId("task"),
-    title,
-    description: input.description?.trim() || undefined,
+    title: input.title,
+    description: input.description,
     status: "todo",
     assigneeId: input.assigneeId,
     createdBy,
-    dueDate: input.dueDate || undefined,
+    dueDate: input.dueDate,
     createdAt: now,
     updatedAt: now,
-  }
+  })
+
+  const db = getAdapter()
   await db.set(TASKS_COLLECTION, task.id, { ...task })
   return task
 }
@@ -125,27 +124,15 @@ export async function updateTask(
     }
   }
 
-  const next: TaskRecord = { ...task }
-  if (input.title !== undefined) {
-    const title = input.title.trim()
-    if (!title) throw new HttpError(400, "Task title is required.")
-    next.title = title
-  }
-  if (input.description !== undefined) {
-    next.description = input.description.trim() || undefined
-  }
-  if (input.status !== undefined) {
-    if (!isStatus(input.status)) throw new HttpError(400, "Invalid status.")
-    next.status = input.status
-  }
   if (input.assigneeId !== undefined) {
     await requireAssignee(input.assigneeId)
-    next.assigneeId = input.assigneeId
   }
-  if (input.dueDate !== undefined) {
-    next.dueDate = input.dueDate || undefined
-  }
-  next.updatedAt = new Date().toISOString()
+
+  const next = parseTaskRecord({
+    ...task,
+    ...input,
+    updatedAt: new Date().toISOString(),
+  })
 
   const db = getAdapter()
   await db.set(TASKS_COLLECTION, id, { ...next })

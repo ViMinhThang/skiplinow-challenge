@@ -12,21 +12,27 @@ import {
   verifyEmployeeAccessCode,
   verifyOwnerAccessCode,
 } from "../services/auth.js"
-import { readString } from "../utils/http.js"
+import { parseBody } from "../utils/parse.js"
+import {
+  emailCodeSchema,
+  emailInputSchema,
+  loginSchema,
+  patchMeSchema,
+  phoneInputSchema,
+  setupSchema,
+  verifyCodeSchema,
+} from "../validation/schemas.js"
 
 export const authRouter: Router = Router()
 
-authRouter.post("/request-code", requestCodeLimiter, async (req, res) => {
-  res.json(await requestOwnerAccessCode(readString(req.body, "phone")))
+authRouter.post("/create-new-access-code", requestCodeLimiter, async (req, res) => {
+  const { phone } = parseBody(req.body, phoneInputSchema)
+  res.json(await requestOwnerAccessCode(phone))
 })
 
-authRouter.post("/verify-code", async (req, res) => {
-  res.json(
-    await verifyOwnerAccessCode(
-      readString(req.body, "phone"),
-      readString(req.body, "code"),
-    ),
-  )
+authRouter.post("/validate-access-code", async (req, res) => {
+  const { phone, code } = parseBody(req.body, verifyCodeSchema)
+  res.json(await verifyOwnerAccessCode(phone, code))
 })
 
 authRouter.get("/me", requireAuth(), async (req, res) => {
@@ -34,46 +40,26 @@ authRouter.get("/me", requireAuth(), async (req, res) => {
 })
 
 authRouter.patch("/me", requireAuth(), async (req, res) => {
-  const input = req.body ?? {}
-  const optional = (key: string) =>
-    key in input ? readString(input, key) : undefined
-  res.json(
-    await updateCurrentUser(getAuthUser(req), {
-      name: optional("name"),
-      phone: optional("phone"),
-      email: optional("email"),
-    }),
-  )
+  const input = parseBody(req.body, patchMeSchema)
+  res.json(await updateCurrentUser(getAuthUser(req), input))
 })
 
 authRouter.post("/setup", async (req, res) => {
-  res.json(
-    await setupEmployeeAccount(
-      readString(req.body, "token"),
-      readString(req.body, "username"),
-      readString(req.body, "password"),
-    ),
-  )
+  const { token, username, password } = parseBody(req.body, setupSchema)
+  res.json(await setupEmployeeAccount(token, username, password))
 })
 
 authRouter.post("/login", async (req, res) => {
-  res.json(
-    await loginEmployee(
-      readString(req.body, "username"),
-      readString(req.body, "password"),
-    ),
-  )
+  const { username, password } = parseBody(req.body, loginSchema)
+  res.json(await loginEmployee(username, password))
 })
 
 authRouter.post("/login-email", async (req, res) => {
-  res.json(await requestEmployeeAccessCode(readString(req.body, "email")))
+  const { email } = parseBody(req.body, emailInputSchema)
+  res.json(await requestEmployeeAccessCode(email))
 })
 
 authRouter.post("/validate-email-code", async (req, res) => {
-  res.json(
-    await verifyEmployeeAccessCode(
-      readString(req.body, "email"),
-      readString(req.body, "code"),
-    ),
-  )
+  const { email, code } = parseBody(req.body, emailCodeSchema)
+  res.json(await verifyEmployeeAccessCode(email, code))
 })

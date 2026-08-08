@@ -22,6 +22,8 @@ export const config = {
     accountSid: process.env.TWILIO_ACCOUNT_SID ?? "",
     authToken: process.env.TWILIO_AUTH_TOKEN ?? "",
     from: process.env.TWILIO_FROM ?? "",
+    bodyTemplate: process.env.TWILIO_BODY_TEMPLATE ?? "",
+    contentSid: process.env.TWILIO_CONTENT_SID ?? "",
   },
   smtp: {
     host: process.env.SMTP_HOST ?? "",

@@ -17,6 +17,11 @@ import { Button } from "@/components/ui/button"
 import { IconInput } from "@/components/ui/icon-input"
 import { Label } from "@/components/ui/label"
 import { getErrorMessage } from "@/lib/format"
+import {
+  accessCodeFormSchema,
+  formMessage,
+  phoneInputFormSchema,
+} from "@/lib/schemas"
 import { requestAccessCode, verifyAccessCode } from "@/services/auth"
 import { useAuthStore } from "@/stores/auth"
 
@@ -36,14 +41,15 @@ export function LoginForm() {
   async function handleRequestCode(event: React.FormEvent) {
     event.preventDefault()
     setError(null)
-    if (!phone.trim()) {
-      setError("Please enter your phone number.")
+    const phoneError = formMessage(phoneInputFormSchema.safeParse({ phone }))
+    if (phoneError) {
+      setError(phoneError)
       return
     }
     setLoading(true)
     try {
       const response = await requestAccessCode(phone.trim())
-      setDevCode(response.devCode ?? null)
+      setDevCode(response.accessCode ?? null)
       setStep("code")
       toast.success(response.message)
     } catch (err) {
@@ -56,8 +62,9 @@ export function LoginForm() {
   async function handleVerifyCode(event: React.FormEvent) {
     event.preventDefault()
     setError(null)
-    if (!/^\d{6}$/.test(code.trim())) {
-      setError("Please enter the 6-digit access code.")
+    const codeError = formMessage(accessCodeFormSchema.safeParse({ code }))
+    if (codeError) {
+      setError(codeError)
       return
     }
     setLoading(true)
@@ -144,7 +151,7 @@ export function LoginForm() {
             {devCode && (
               <p className="flex items-center gap-1.5 rounded-md bg-muted/50 px-2.5 py-1.5 text-xs text-muted-foreground">
                 <CircleCheckIcon className="size-3.5 shrink-0 text-success" />
-                Dev SMS: your code is{" "}
+                Your code is{" "}
                 <span className="font-semibold text-foreground">
                   {devCode}
                 </span>

@@ -1,5 +1,4 @@
-import { getFirestoreDb, firebaseReady } from "./firebase.js"
-import { config } from "./config.js"
+import { getFirestoreDb } from "./firebase.js"
 import type { Firestore } from "firebase-admin/firestore"
 
 export interface DocRecord {
@@ -23,6 +22,12 @@ function toRecord(id: string, data: Record<string, unknown>): DocRecord {
   return { id, ...data }
 }
 
+function withoutUndefined(doc: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(doc).filter(([, value]) => value !== undefined),
+  )
+}
+
 class FirestoreAdapter implements DbAdapter {
   private db: Firestore
 
@@ -42,7 +47,7 @@ class FirestoreAdapter implements DbAdapter {
   }
 
   async set(collection: string, id: string, doc: DocRecord): Promise<void> {
-    await this.db.collection(collection).doc(id).set({ ...doc })
+    await this.db.collection(collection).doc(id).set(withoutUndefined({ ...doc }))
   }
 
   async update(
@@ -50,7 +55,7 @@ class FirestoreAdapter implements DbAdapter {
     id: string,
     patch: Record<string, unknown>,
   ): Promise<void> {
-    await this.db.collection(collection).doc(id).set(patch, { merge: true })
+    await this.db.collection(collection).doc(id).set(withoutUndefined(patch), { merge: true })
   }
 
   async remove(collection: string, id: string): Promise<void> {
@@ -58,56 +63,6 @@ class FirestoreAdapter implements DbAdapter {
   }
 }
 
-class MemoryAdapter implements DbAdapter {
-  private stores = new Map<string, Map<string, DocRecord>>()
-
-  private store(collection: string): Map<string, DocRecord> {
-    let store = this.stores.get(collection)
-    if (!store) {
-      store = new Map()
-      this.stores.set(collection, store)
-    }
-    return store
-  }
-
-  async list(collection: string): Promise<DocRecord[]> {
-    return [...this.store(collection).values()].map((doc) => ({ ...doc }))
-  }
-
-  async get(collection: string, id: string): Promise<DocRecord | null> {
-    const doc = this.store(collection).get(id)
-    return doc ? { ...doc } : null
-  }
-
-  async set(collection: string, id: string, doc: DocRecord): Promise<void> {
-    this.store(collection).set(id, { ...doc })
-  }
-
-  async update(
-    collection: string,
-    id: string,
-    patch: Record<string, unknown>,
-  ): Promise<void> {
-    const store = this.store(collection)
-    const existing = store.get(id) ?? { id }
-    store.set(id, { ...existing, ...patch, id })
-  }
-
-  async remove(collection: string, id: string): Promise<void> {
-    this.store(collection).delete(id)
-  }
-}
-
-let memoryAdapter: MemoryAdapter | null = null
-
 export function getAdapter(): DbAdapter {
-  if (firebaseReady()) return new FirestoreAdapter(getFirestoreDb())
-  if (config.devMode) {
-    memoryAdapter ??= new MemoryAdapter()
-    return memoryAdapter
-  }
-  throw new Error(
-    "Firebase is not configured. Set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS.",
-  )
+  return new FirestoreAdapter(getFirestoreDb())
 }
-

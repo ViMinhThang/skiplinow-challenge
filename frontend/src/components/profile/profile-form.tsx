@@ -9,21 +9,13 @@ import { Button } from "@/components/ui/button"
 import { IconInput } from "@/components/ui/icon-input"
 import { Label } from "@/components/ui/label"
 import { getErrorMessage } from "@/lib/format"
+import { formMessage, profileFormSchema } from "@/lib/schemas"
 import { updateOwnProfile } from "@/services/auth"
 import { useAuthStore, useCurrentUser } from "@/stores/auth"
 import type { UserUpdateInput } from "@/types"
 
 function validate(form: UserUpdateInput): string | null {
-  if (form.name !== undefined && !form.name.trim()) return "Name is required."
-  if (form.phone !== undefined) {
-    if (!/^\d{7,15}$/.test(form.phone.replace(/\D/g, ""))) {
-      return "Phone number must contain 7–15 digits."
-    }
-  }
-  if (form.email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-    return "Please enter a valid email address."
-  }
-  return null
+  return formMessage(profileFormSchema.safeParse(form))
 }
 
 export function ProfileForm() {

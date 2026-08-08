@@ -8,25 +8,21 @@ import { config } from "./config.js"
 
 let app: App | null = null
 let db: Firestore | null = null
-let initError: string | null = null
 
 export function initFirebase(): void {
   if (app) return
-  try {
-    if (config.firebaseServiceAccount) {
-      const raw = readFileSync(config.firebaseServiceAccount, "utf8")
-      app = initializeApp({ credential: cert(JSON.parse(raw)) })
-    } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      app = initializeApp({ credential: applicationDefault() })
-    } else {
-      initError =
-        "Firebase credentials are not configured. Set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS."
-      return
-    }
-    db = getFirestore(app)
-  } catch (err) {
-    initError = err instanceof Error ? err.message : String(err)
+
+  if (config.firebaseServiceAccount) {
+    const raw = readFileSync(config.firebaseServiceAccount, "utf8")
+    app = initializeApp({ credential: cert(JSON.parse(raw)) })
+  } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    app = initializeApp({ credential: applicationDefault() })
+  } else {
+    throw new Error(
+      "Firebase is not configured. Set FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS.",
+    )
   }
+  db = getFirestore(app)
 }
 
 export function firebaseReady(): boolean {
@@ -34,13 +30,6 @@ export function firebaseReady(): boolean {
 }
 
 export function getFirestoreDb(): Firestore {
-  if (!db) {
-    initFirebase()
-    if (!db) {
-      throw new Error(initError ?? "Firebase is not initialized.")
-    }
-  }
-  return db
+  if (!db) initFirebase()
+  return db as Firestore
 }
-
-

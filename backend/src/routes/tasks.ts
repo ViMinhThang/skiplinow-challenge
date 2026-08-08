@@ -12,7 +12,8 @@ import {
   emitTaskDeleted,
   emitTaskUpdated,
 } from "../sockets/task-events.js"
-import { readString } from "../utils/http.js"
+import { parseBody } from "../utils/parse.js"
+import { createTaskSchema, updateTaskSchema } from "../validation/schemas.js"
 
 export const tasksRouter: Router = Router()
 
@@ -23,13 +24,13 @@ tasksRouter.get("/", async (_req, res) => {
 })
 
 tasksRouter.post("/", requireAuth("owner"), async (req, res) => {
-  const input = req.body ?? {}
+  const input = parseBody(req.body, createTaskSchema)
   const task = await createTask(
     {
-      title: readString(input, "title"),
-      description: readString(input, "description") || undefined,
-      assigneeId: readString(input, "assigneeId"),
-      dueDate: readString(input, "dueDate") || undefined,
+      title: input.title,
+      description: input.description || undefined,
+      assigneeId: input.assigneeId,
+      dueDate: input.dueDate || undefined,
     },
     getAuthUser(req).id,
   )
@@ -38,25 +39,8 @@ tasksRouter.post("/", requireAuth("owner"), async (req, res) => {
 })
 
 tasksRouter.patch("/:id", async (req, res) => {
-  const input = req.body ?? {}
-  const task = await updateTask(
-    String(req.params.id ?? ""),
-    {
-      title: input.title === undefined ? undefined : readString(input, "title"),
-      description:
-        input.description === undefined
-          ? undefined
-          : readString(input, "description"),
-      assigneeId:
-        input.assigneeId === undefined
-          ? undefined
-          : readString(input, "assigneeId"),
-      dueDate:
-        input.dueDate === undefined ? undefined : readString(input, "dueDate"),
-      status: input.status === undefined ? undefined : readString(input, "status") as "todo" | "in_progress" | "done",
-    },
-    getAuthUser(req),
-  )
+  const input = parseBody(req.body, updateTaskSchema)
+  const task = await updateTask(String(req.params.id ?? ""), input, getAuthUser(req))
   emitTaskUpdated(task)
   res.json(task)
 })

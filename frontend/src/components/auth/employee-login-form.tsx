@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { IconInput } from "@/components/ui/icon-input"
 import { Label } from "@/components/ui/label"
 import { getErrorMessage } from "@/lib/format"
+import { formMessage, loginFormSchema } from "@/lib/schemas"
 import { login } from "@/services/auth"
 import { useAuthStore } from "@/stores/auth"
 
@@ -31,8 +32,9 @@ export function EmployeeLoginForm() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     setError(null)
-    if (!username.trim() || !password) {
-      setError("Please enter your username and password.")
+    const formError = formMessage(loginFormSchema.safeParse({ username, password }))
+    if (formError) {
+      setError(formError)
       return
     }
     setLoading(true)

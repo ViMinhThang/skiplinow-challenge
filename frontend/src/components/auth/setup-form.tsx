@@ -25,6 +25,7 @@ import { IconInput } from "@/components/ui/icon-input"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getErrorMessage } from "@/lib/format"
+import { formMessage, setupFormSchema } from "@/lib/schemas"
 import { setupAccount } from "@/services/auth"
 
 export function SetupForm() {
@@ -57,16 +58,9 @@ export function SetupForm() {
   const setupToken: string = token
 
   function validate(): string | null {
-    if (username.trim().length < 3) {
-      return "Username must be at least 3 characters."
-    }
-    if (password.length < 6) {
-      return "Password must be at least 6 characters."
-    }
-    if (password !== confirmPassword) {
-      return "Passwords do not match."
-    }
-    return null
+    return formMessage(
+      setupFormSchema.safeParse({ username, password, confirmPassword }),
+    )
   }
 
   async function handleSubmit(event: React.FormEvent) {

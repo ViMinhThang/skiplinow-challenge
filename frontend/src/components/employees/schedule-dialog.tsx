@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getErrorMessage } from "@/lib/format"
+import { formMessage, scheduleFormSchema } from "@/lib/schemas"
 import { DAY_LONG, WEEK_DAYS } from "@/lib/schedule"
 import { useUpdateSchedule } from "@/hooks/use-employees"
 import type { Employee, WorkScheduleDay, WorkScheduleEntry } from "@/types"
@@ -53,13 +54,9 @@ function ScheduleFields({ employee }: { employee: Employee }) {
 
   async function handleSave() {
     setError(null)
-    const invalid = entries.find(
-      (entry) => entry.enabled && entry.start >= entry.end,
-    )
-    if (invalid) {
-      setError(
-        `${DAY_LONG[invalid.day]}: start time must be before end time.`,
-      )
+    const validationError = formMessage(scheduleFormSchema.safeParse({ entries }))
+    if (validationError) {
+      setError(validationError)
       return
     }
     try {

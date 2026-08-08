@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useEmployees } from "@/hooks/use-employees"
 import { useCreateTask, useUpdateTask } from "@/hooks/use-tasks"
 import { getErrorMessage } from "@/lib/format"
+import { formMessage, taskFormSchema } from "@/lib/schemas"
 import { STATUS_LABELS, TASK_STATUSES } from "@/lib/tasks"
 import type { Task, TaskUpdateInput } from "@/types"
 
@@ -64,9 +65,7 @@ function FormFields({ task }: { task?: Task | null }) {
   }
 
   function validate(): string | null {
-    if (!form.title?.trim()) return "Task title is required."
-    if (!form.assigneeId) return "Please choose an assignee."
-    return null
+    return formMessage(taskFormSchema.safeParse(form))
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -83,11 +82,12 @@ function FormFields({ task }: { task?: Task | null }) {
         await updateMutation.mutateAsync({ id: task.id, input: form })
         toast.success("Task updated.")
       } else {
+        const parsed = taskFormSchema.parse(form)
         await createMutation.mutateAsync({
-          title: form.title ?? "",
-          description: form.description,
-          assigneeId: form.assigneeId ?? "",
-          dueDate: form.dueDate,
+          title: parsed.title,
+          description: parsed.description,
+          assigneeId: parsed.assigneeId,
+          dueDate: parsed.dueDate,
         })
         toast.success("Task created.")
       }

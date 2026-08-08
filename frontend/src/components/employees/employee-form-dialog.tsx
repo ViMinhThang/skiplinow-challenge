@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2Icon, MailIcon, SmartphoneIcon, UserIcon } from "lucide-react"
+import { Loader2Icon, MailIcon, UserIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { FormError } from "@/components/auth/form-error"
@@ -24,10 +24,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { getErrorMessage } from "@/lib/format"
+import { employeeFormSchema, formMessage } from "@/lib/schemas"
 import { useCreateEmployee, useUpdateEmployee } from "@/hooks/use-employees"
 import type { Employee, EmployeeInput } from "@/types"
 
-const ROLE_OPTIONS = [
+const DEPARTMENT_OPTIONS = [
   "Staff",
   "Developer",
   "Designer",
@@ -44,9 +45,8 @@ interface EmployeeFormDialogProps {
 function initialForm(employee?: Employee | null): EmployeeInput {
   return {
     name: employee?.name ?? "",
-    phone: employee?.phone ?? "",
     email: employee?.email ?? "",
-    role: employee?.role ?? ROLE_OPTIONS[0],
+    department: employee?.role ?? DEPARTMENT_OPTIONS[0],
   }
 }
 
@@ -67,16 +67,7 @@ function FormFields({
   }
 
   function validate(): string | null {
-    if (!form.name.trim()) return "Name is required."
-    if (!form.phone.trim()) return "Phone number is required."
-    if (!/^\d{7,15}$/.test(form.phone.replace(/\D/g, ""))) {
-      return "Phone number must contain 7–15 digits."
-    }
-    if (!form.email.trim()) return "Email is required."
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      return "Please enter a valid email address."
-    }
-    return null
+    return formMessage(employeeFormSchema.safeParse(form))
   }
 
   async function handleSubmit(event: React.FormEvent) {
@@ -116,18 +107,6 @@ function FormFields({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="employee-phone">Phone number</Label>
-          <IconInput
-            id="employee-phone"
-            icon={<SmartphoneIcon />}
-            type="tel"
-            placeholder="e.g. 555-0101"
-            value={form.phone}
-            onChange={(event) => set("phone", event.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="employee-email">Email</Label>
           <IconInput
             id="employee-email"
@@ -140,18 +119,18 @@ function FormFields({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="employee-role">Role</Label>
+          <Label htmlFor="employee-department">Department</Label>
           <Select
-            value={form.role}
-            onValueChange={(value) => set("role", value)}
+            value={form.department}
+            onValueChange={(value) => set("department", value)}
           >
-            <SelectTrigger id="employee-role" className="w-full">
-              <SelectValue placeholder="Select a role" />
+            <SelectTrigger id="employee-department" className="w-full">
+              <SelectValue placeholder="Select a department" />
             </SelectTrigger>
             <SelectContent>
-              {ROLE_OPTIONS.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {role}
+              {DEPARTMENT_OPTIONS.map((department) => (
+                <SelectItem key={department} value={department}>
+                  {department}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -1,6 +1,7 @@
 import { config } from "../config.js"
 import { HttpError } from "../errors/http-error.js"
 import { hashValue, verifyValue } from "../utils/crypto.js"
+import { z } from "zod"
 import { generateAccessCode, saveAccessCode, verifyAccessCode } from "./access-codes.js"
 import { sendAccessCodeEmail } from "./email.js"
 import {
@@ -15,9 +16,9 @@ import {
 import { findOwnerById, findOwnerByPhone, type OwnerRecord } from "./owners.js"
 import { sendAccessCodeSms } from "./sms.js"
 import { signToken, type AuthUser } from "./tokens.js"
+import { normalizePhone } from "../utils/phone.js"
 
-export const USERNAME_PATTERN = /^[a-zA-Z0-9._-]{3,30}$/
-export const MIN_PASSWORD_LENGTH = 8
+export { MIN_PASSWORD_LENGTH, USERNAME_PATTERN } from "../validation/constants.js"
 
 export interface OwnerUserView {
   id: string
@@ -69,20 +70,16 @@ function withDevCode<T extends { message: string }>(result: T, code: string): T 
 
 export async function requestOwnerAccessCode(
   phone: string,
-): Promise<{ message: string; devCode?: string }> {
-  const owner = await findOwnerByPhone(phone)
-  if (!owner) {
-    throw new HttpError(
-      404,
-      "Phone number is not registered. Please use the number assigned to your account.",
-    )
-  }
-
+): Promise<{ success: true; accessCode: string; message: string }> {
   const code = generateAccessCode()
-  await saveAccessCode(owner.phoneNormalized, code)
-  await sendAccessCodeSms(owner.phone, code)
+  await saveAccessCode(normalizePhone(phone), code)
+  await sendAccessCodeSms(phone, code)
 
-  return withDevCode({ message: "Access code sent. Check your texts." }, code)
+  return {
+    success: true,
+    accessCode: code,
+    message: "Access code generated.",
+  }
 }
 
 export async function verifyOwnerAccessCode(
@@ -146,21 +143,18 @@ export async function setupEmployeeAccount(
   password: string,
 ): Promise<{ message: string }> {
   if (!token) throw new HttpError(400, "Setup token is required.")
-  if (!USERNAME_PATTERN.test(username)) {
-    throw new HttpError(
-      400,
-      "Username must be 3–30 characters (letters, numbers, dot, dash, underscore).",
-    )
-  }
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    throw new HttpError(400, "Password must be at least 8 characters.")
-  }
 
   const employee = await findEmployeeByInviteToken(token)
   if (!employee) throw new HttpError(401, "Invalid or expired setup link.")
+
+  const inviteExpiresAt = z
+    .number()
+    .optional()
+    .safeParse(employee.inviteExpiresAt)
   if (
-    typeof employee.inviteExpiresAt === "number" &&
-    employee.inviteExpiresAt < Date.now()
+    inviteExpiresAt.success &&
+    inviteExpiresAt.data !== undefined &&
+    inviteExpiresAt.data < Date.now()
   ) {
     throw new HttpError(
       401,

@@ -1,19 +1,17 @@
 import { getAdapter } from "../db.js"
 import { HttpError } from "../errors/http-error.js"
 import { generateId } from "../utils/id.js"
+import {
+  chatMessageSchema,
+  conversationRecordSchema,
+} from "../validation/schemas.js"
+import type { z } from "zod"
 import { findOwnerById } from "./owners.js"
 import { findEmployeeById } from "./employees.js"
 
 const CONVERSATIONS_COLLECTION = "conversations"
 
-export interface ChatMessage {
-  id: string
-  conversationId: string
-  senderId: string
-  recipientId: string
-  content: string
-  createdAt: string
-}
+export type ChatMessage = z.infer<typeof chatMessageSchema>
 
 export interface ConversationParticipant {
   id: string
@@ -39,16 +37,7 @@ function fromRecord(record: {
   id: string
   [key: string]: unknown
 }): ConversationRecord {
-  return {
-    id: record.id,
-    participantIds: Array.isArray(record.participantIds)
-      ? (record.participantIds as string[])
-      : [],
-    messages: Array.isArray(record.messages)
-      ? (record.messages as ChatMessage[])
-      : [],
-    lastMessageAt: record.lastMessageAt ? String(record.lastMessageAt) : undefined,
-  }
+  return conversationRecordSchema.parse(record)
 }
 
 async function findRecord(id: string): Promise<ConversationRecord | null> {
@@ -151,9 +140,6 @@ export async function sendMessage(
   if (!record) throw new HttpError(404, "Conversation not found.")
   assertParticipant(record, senderId)
 
-  const body = content.trim()
-  if (!body) throw new HttpError(400, "Message cannot be empty.")
-
   const recipientId = record.participantIds.find((id) => id !== senderId)
   if (!recipientId) throw new HttpError(400, "Conversation has no recipient.")
 
@@ -163,7 +149,7 @@ export async function sendMessage(
     conversationId,
     senderId,
     recipientId,
-    content: body,
+    content,
     createdAt: now,
   }
   record.messages.push(message)

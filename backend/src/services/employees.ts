@@ -3,14 +3,16 @@ import { HttpError } from "../errors/http-error.js"
 import { generateToken, hashValue, verifyValue } from "../utils/crypto.js"
 import { generateId } from "../utils/id.js"
 import { normalizePhone } from "../utils/phone.js"
-import { isEmail, isPhone, isTime } from "../utils/validation.js"
+import {
+  employeeRecordSchema,
+  scheduleEntrySchema,
+} from "../validation/schemas.js"
 import { sendInviteEmail } from "./email.js"
 import {
   WEEK_DAYS,
   defaultSchedule,
-  isWorkScheduleDay,
   type WorkSchedule,
-  type WorkScheduleDay,
+  type WorkScheduleEntry,
 } from "./schedule.js"
 
 export const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -46,9 +48,8 @@ export interface EmployeeView {
 
 export interface CreateEmployeeInput {
   name: string
-  phone: string
   email: string
-  role: string
+  department: string
 }
 
 export interface UpdateEmployeeInput {
@@ -78,26 +79,7 @@ function toEmployee(record: EmployeeRecord): EmployeeView {
 }
 
 function fromRecord(record: { id: string; [key: string]: unknown }): EmployeeRecord {
-  return {
-    id: record.id,
-    name: String(record.name ?? ""),
-    phone: String(record.phone ?? ""),
-    phoneNormalized: String(record.phoneNormalized ?? ""),
-    email: String(record.email ?? ""),
-    role: String(record.role ?? ""),
-    accountSetup: Boolean(record.accountSetup),
-    schedule: (record.schedule as WorkSchedule) ?? defaultSchedule(),
-    username: record.username ? String(record.username) : undefined,
-    passwordHash: record.passwordHash ? String(record.passwordHash) : undefined,
-    inviteTokenHash: record.inviteTokenHash
-      ? String(record.inviteTokenHash)
-      : undefined,
-    inviteExpiresAt: record.inviteExpiresAt
-      ? Number(record.inviteExpiresAt)
-      : undefined,
-    createdAt: String(record.createdAt ?? new Date().toISOString()),
-    updatedAt: String(record.updatedAt ?? new Date().toISOString()),
-  }
+  return employeeRecordSchema.parse(record)
 }
 
 async function findRecord(id: string): Promise<EmployeeRecord | null> {
@@ -116,18 +98,18 @@ async function listRecords(): Promise<EmployeeRecord[]> {
 
 async function assertUniqueEmailAndPhone(
   email: string,
-  phone: string,
+  phone?: string,
   excludeId?: string,
 ): Promise<void> {
   const records = await listRecords()
   const emailKey = email.toLowerCase()
-  const phoneKey = normalizePhone(phone)
+  const phoneKey = phone ? normalizePhone(phone) : ""
   for (const record of records) {
     if (record.id === excludeId) continue
     if (record.email.toLowerCase() === emailKey) {
       throw new HttpError(409, "An employee with this email already exists.")
     }
-    if (record.phoneNormalized === phoneKey) {
+    if (phoneKey && record.phoneNormalized === phoneKey) {
       throw new HttpError(
         409,
         "An employee with this phone number already exists.",
@@ -147,40 +129,6 @@ async function issueInvite(): Promise<{
     tokenHash: await hashValue(token),
     expiresAt: Date.now() + INVITE_TTL_MS,
   }
-}
-
-function validateScheduleEntries(entries: unknown): WorkSchedule["entries"] {
-  if (!Array.isArray(entries) || entries.length !== WEEK_DAYS.length) {
-    throw new HttpError(400, "Schedule must include all 7 days.")
-  }
-
-  const seen = new Set<WorkScheduleDay>()
-  for (const entry of entries) {
-    if (!isWorkScheduleDay(String(entry?.day))) {
-      throw new HttpError(400, `Unknown day "${String(entry?.day)}".`)
-    }
-    const day = entry.day
-    if (seen.has(day)) {
-      throw new HttpError(400, `Duplicate day "${day}".`)
-    }
-    seen.add(day)
-
-    if (typeof entry.enabled !== "boolean") {
-      throw new HttpError(400, "Each day needs an enabled flag.")
-    }
-    if (!entry.enabled) continue
-
-    if (!isTime(entry.start) || !isTime(entry.end)) {
-      throw new HttpError(400, "Work hours must use HH:MM format.")
-    }
-    if (entry.start >= entry.end) {
-      throw new HttpError(400, `Start time must be before end time on ${day}.`)
-    }
-  }
-
-  return WEEK_DAYS.map(
-    (day) => entries.find((entry) => entry.day === day) as WorkSchedule["entries"][number],
-  )
 }
 
 export async function listEmployees(): Promise<EmployeeView[]> {
@@ -203,21 +151,12 @@ export async function findEmployeeById(
 export async function createEmployee(
   input: CreateEmployeeInput,
 ): Promise<EmployeeView & { success: true; employeeId: string }> {
-  const name = input.name.trim()
-  const email = input.email.trim().toLowerCase()
-  const phone = input.phone.trim()
-  const role = input.role.trim()
+  const email = input.email.toLowerCase()
+  const role = input.department.trim()
 
-  if (!name) throw new HttpError(400, "Name is required.")
-  if (!isEmail(email)) {
-    throw new HttpError(400, "Please enter a valid email address.")
-  }
-  if (!isPhone(phone)) {
-    throw new HttpError(400, "Phone number must contain 7–15 digits.")
-  }
-  if (!role) throw new HttpError(400, "Role is required.")
+  if (!role) throw new HttpError(400, "Department is required.")
 
-  await assertUniqueEmailAndPhone(email, phone)
+  await assertUniqueEmailAndPhone(email)
 
   const db = getAdapter()
   const id = generateId("emp")
@@ -226,9 +165,9 @@ export async function createEmployee(
 
   const record: EmployeeRecord = {
     id,
-    name,
-    phone,
-    phoneNormalized: normalizePhone(phone),
+    name: input.name,
+    phone: "",
+    phoneNormalized: "",
     email,
     role,
     accountSetup: false,
@@ -240,7 +179,7 @@ export async function createEmployee(
   }
   await db.set(EMPLOYEES_COLLECTION, id, { ...record })
 
-  const emailResult = await sendInviteEmail(email, name, invite.token)
+  const emailResult = await sendInviteEmail(email, input.name, invite.token)
   return {
     ...toEmployee(record),
     success: true,
@@ -253,29 +192,17 @@ async function applyPatch(
   record: EmployeeRecord,
   patch: { name?: string; phone?: string; email?: string; role?: string },
 ): Promise<EmployeeRecord> {
-  const name = patch.name?.trim()
-  const email = patch.email?.trim().toLowerCase()
-  const phone = patch.phone?.trim()
-  const role = patch.role?.trim()
+  const email = patch.email?.toLowerCase()
 
-  if (name !== undefined && !name) throw new HttpError(400, "Name is required.")
-  if (email !== undefined && !isEmail(email)) {
-    throw new HttpError(400, "Please enter a valid email address.")
-  }
-  if (phone !== undefined && !isPhone(phone)) {
-    throw new HttpError(400, "Phone number must contain 7–15 digits.")
-  }
-  if (role !== undefined && !role) throw new HttpError(400, "Role is required.")
-
-  await assertUniqueEmailAndPhone(email ?? record.email, phone ?? record.phone, record.id)
+  await assertUniqueEmailAndPhone(email ?? record.email, patch.phone ?? record.phone, record.id)
 
   const next: EmployeeRecord = {
     ...record,
-    name: name ?? record.name,
+    name: patch.name ?? record.name,
     email: email ?? record.email,
-    phone: phone ?? record.phone,
-    phoneNormalized: normalizePhone(phone ?? record.phone),
-    role: role ?? record.role,
+    phone: patch.phone ?? record.phone,
+    phoneNormalized: normalizePhone(patch.phone ?? record.phone),
+    role: patch.role ?? record.role,
     updatedAt: new Date().toISOString(),
   }
   const db = getAdapter()
@@ -313,12 +240,20 @@ export async function deleteEmployee(
 
 export async function updateSchedule(
   id: string,
-  entries: unknown,
+  entries: WorkScheduleEntry[],
 ): Promise<WorkSchedule> {
   const record = await findRecord(id)
   if (!record) throw new HttpError(404, "Employee not found.")
 
-  const schedule: WorkSchedule = { entries: validateScheduleEntries(entries) }
+  const schedule: WorkSchedule = {
+    entries: WEEK_DAYS.map((day) => {
+      const entry = entries.find((entry) => entry.day === day)
+      if (!entry) {
+        throw new HttpError(400, `Missing schedule entry for ${day}.`)
+      }
+      return scheduleEntrySchema.parse(entry)
+    }),
+  }
   const db = getAdapter()
   await db.update(EMPLOYEES_COLLECTION, id, {
     schedule,

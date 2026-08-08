@@ -1,6 +1,5 @@
 import { Router } from "express"
 
-import { HttpError } from "../errors/http-error.js"
 import { requireAuth } from "../middleware/require-auth.js"
 import {
   createEmployee,
@@ -11,7 +10,14 @@ import {
   updateEmployee,
   updateSchedule,
 } from "../services/employees.js"
-import { readString } from "../utils/http.js"
+import { parseBody } from "../utils/parse.js"
+import {
+  createEmployeeSchema,
+  employeeIdSchema,
+  resendInviteSchema,
+  scheduleInputSchema,
+  updateEmployeeSchema,
+} from "../validation/schemas.js"
 
 export const employeesRouter: Router = Router()
 
@@ -21,23 +27,24 @@ employeesRouter.get("/", async (_req, res) => {
   res.json(await listEmployees())
 })
 
-employeesRouter.post("/", requireAuth("owner"), async (req, res) => {
-  const input = req.body ?? {}
+employeesRouter.post("/create-employee", requireAuth("owner"), async (req, res) => {
+  const input = parseBody(req.body, createEmployeeSchema)
   const employee = await createEmployee({
-    name: readString(input, "name"),
-    phone: readString(input, "phone"),
-    email: readString(input, "email"),
-    role: readString(input, "role") || readString(input, "department"),
+    name: input.name,
+    email: input.email,
+    department: input.department,
   })
   res.status(201).json(employee)
 })
 
-employeesRouter.post("/get", requireAuth("owner"), async (req, res) => {
-  res.json(await getEmployee(readString(req.body, "employeeId")))
+employeesRouter.post("/get-employee", requireAuth("owner"), async (req, res) => {
+  const { employeeId } = parseBody(req.body, employeeIdSchema)
+  res.json(await getEmployee(employeeId))
 })
 
-employeesRouter.post("/delete", requireAuth("owner"), async (req, res) => {
-  res.json(await deleteEmployee(readString(req.body, "employeeId")))
+employeesRouter.post("/delete-employee", requireAuth("owner"), async (req, res) => {
+  const { employeeId } = parseBody(req.body, employeeIdSchema)
+  res.json(await deleteEmployee(employeeId))
 })
 
 employeesRouter.get("/:id", async (req, res) => {
@@ -45,15 +52,13 @@ employeesRouter.get("/:id", async (req, res) => {
 })
 
 employeesRouter.patch("/:id", requireAuth("owner"), async (req, res) => {
-  const input = req.body ?? {}
-  res.json(
-    await updateEmployee(String(req.params.id ?? ""), {
-      name: readString(input, "name") || undefined,
-      phone: readString(input, "phone") || undefined,
-      email: readString(input, "email") || undefined,
-      role: readString(input, "role") || undefined,
-    }),
-  )
+  const input = parseBody(req.body, updateEmployeeSchema)
+  res.json(await updateEmployee(String(req.params.id ?? ""), {
+    name: input.name,
+    phone: input.phone,
+    email: input.email,
+    role: input.role ?? input.department,
+  }))
 })
 
 employeesRouter.delete("/:id", requireAuth("owner"), async (req, res) => {
@@ -61,14 +66,11 @@ employeesRouter.delete("/:id", requireAuth("owner"), async (req, res) => {
 })
 
 employeesRouter.put("/:id/schedule", requireAuth("owner"), async (req, res) => {
-  res.json(
-    await updateSchedule(String(req.params.id ?? ""), req.body?.entries),
-  )
+  const { entries } = parseBody(req.body, scheduleInputSchema)
+  res.json(await updateSchedule(String(req.params.id ?? ""), entries))
 })
 
 employeesRouter.post("/:id", requireAuth("owner"), async (req, res) => {
-  if (req.body?.action !== "resend-invite") {
-    throw new HttpError(400, "Unknown action.")
-  }
+  parseBody(req.body, resendInviteSchema)
   res.json(await resendInvite(String(req.params.id ?? "")))
 })

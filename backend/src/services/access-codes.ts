@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto"
 
 import { getAdapter } from "../db.js"
 import { hashValue, verifyValue } from "../utils/crypto.js"
+import { accessCodeRecordSchema } from "../validation/schemas.js"
 
 export const CODE_TTL_MS = 10 * 60 * 1000
 const MAX_ATTEMPTS = 5
@@ -30,22 +31,24 @@ export async function verifyAccessCode(
 ): Promise<boolean> {
   const db = getAdapter()
   const record = await db.get(ACCESS_CODES_COLLECTION, key)
-  if (!record || typeof record.codeHash !== "string") return false
+  const parsed = accessCodeRecordSchema.safeParse(record)
+  if (!parsed.success) return false
+  const accessCode = parsed.data
 
-  if (typeof record.expiresAt === "number" && record.expiresAt < Date.now()) {
+  if (accessCode.expiresAt < Date.now()) {
     await db.remove(ACCESS_CODES_COLLECTION, key)
     return false
   }
 
-  if (typeof record.attempts === "number" && record.attempts >= MAX_ATTEMPTS) {
+  if (accessCode.attempts >= MAX_ATTEMPTS) {
     await db.remove(ACCESS_CODES_COLLECTION, key)
     return false
   }
 
-  const matches = await verifyValue(code, record.codeHash)
+  const matches = await verifyValue(code, accessCode.codeHash)
   if (!matches) {
     await db.update(ACCESS_CODES_COLLECTION, key, {
-      attempts: (typeof record.attempts === "number" ? record.attempts : 0) + 1,
+      attempts: accessCode.attempts + 1,
     })
     return false
   }

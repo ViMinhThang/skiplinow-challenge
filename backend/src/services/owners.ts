@@ -2,6 +2,7 @@ import { getAdapter } from "../db.js"
 import { config } from "../config.js"
 import { normalizePhone } from "../utils/phone.js"
 import { generateId } from "../utils/id.js"
+import { ownerRecordSchema } from "../validation/schemas.js"
 
 export const OWNER_ID = "owner-1"
 
@@ -20,14 +21,7 @@ function toOwner(record: {
   id: string
   [key: string]: unknown
 }): OwnerRecord {
-  return {
-    id: record.id,
-    name: String(record.name ?? ""),
-    phone: String(record.phone ?? ""),
-    phoneNormalized: String(record.phoneNormalized ?? ""),
-    role: "owner",
-    createdAt: String(record.createdAt ?? new Date().toISOString()),
-  }
+  return ownerRecordSchema.parse(record)
 }
 
 export async function ensureOwner(): Promise<void> {

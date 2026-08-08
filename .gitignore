@@ -38,6 +38,10 @@ yarn-error.log*
 .env*
 !.env.example
 
+# firebase service account keys
+firebase-service-account.json
+**/skiplinow-861c8-firebase-adminsdk*.json
+
 # vercel
 .vercel
 
