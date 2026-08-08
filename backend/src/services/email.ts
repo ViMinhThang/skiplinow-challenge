@@ -25,11 +25,13 @@ async function send(
   text: string,
   devLink?: string,
 ): Promise<EmailResult> {
+  if (config.devMode) {
+    console.log(`[email:dev] to ${to} — ${subject}\n${text}`)
+    return { sent: false, ...(devLink ? { devLink } : {}) }
+  }
+
   const client = transporter()
   if (!client) {
-    if (config.devMode) {
-      console.log(`[email:dev] to ${to} — ${subject}\n${text}`)
-    }
     return { sent: false, ...(devLink ? { devLink } : {}) }
   }
 

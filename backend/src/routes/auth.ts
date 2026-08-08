@@ -8,6 +8,7 @@ import {
   requestEmployeeAccessCode,
   requestOwnerAccessCode,
   setupEmployeeAccount,
+  updateCurrentUser,
   verifyEmployeeAccessCode,
   verifyOwnerAccessCode,
 } from "../services/auth.js"
@@ -30,6 +31,19 @@ authRouter.post("/verify-code", async (req, res) => {
 
 authRouter.get("/me", requireAuth(), async (req, res) => {
   res.json(await getCurrentUser(getAuthUser(req)))
+})
+
+authRouter.patch("/me", requireAuth(), async (req, res) => {
+  const input = req.body ?? {}
+  const optional = (key: string) =>
+    key in input ? readString(input, key) : undefined
+  res.json(
+    await updateCurrentUser(getAuthUser(req), {
+      name: optional("name"),
+      phone: optional("phone"),
+      email: optional("email"),
+    }),
+  )
 })
 
 authRouter.post("/setup", async (req, res) => {

@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCurrentUser } from "@/stores/auth"
-import { useTasks } from "@/hooks/use-tasks"
+import { useTaskRealtime, useTasks } from "@/hooks/use-tasks"
 import { formatMonthDay, formatShortDate } from "@/lib/date"
 import { getErrorMessage } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -83,6 +83,7 @@ function TaskCard({ task }: { task: Task }) {
 }
 
 export default function WorkspaceTasksPage() {
+  useTaskRealtime()
   const user = useCurrentUser()
   const { data: tasks, isLoading, isError, error, refetch } = useTasks()
 

@@ -58,6 +58,12 @@ export interface UpdateEmployeeInput {
   role?: string
 }
 
+export interface UpdateOwnProfileInput {
+  name?: string
+  phone?: string
+  email?: string
+}
+
 function toEmployee(record: EmployeeRecord): EmployeeView {
   return {
     id: record.id,
@@ -243,13 +249,10 @@ export async function createEmployee(
   }
 }
 
-export async function updateEmployee(
-  id: string,
-  patch: UpdateEmployeeInput,
-): Promise<EmployeeView> {
-  const record = await findRecord(id)
-  if (!record) throw new HttpError(404, "Employee not found.")
-
+async function applyPatch(
+  record: EmployeeRecord,
+  patch: { name?: string; phone?: string; email?: string; role?: string },
+): Promise<EmployeeRecord> {
   const name = patch.name?.trim()
   const email = patch.email?.trim().toLowerCase()
   const phone = patch.phone?.trim()
@@ -264,7 +267,7 @@ export async function updateEmployee(
   }
   if (role !== undefined && !role) throw new HttpError(400, "Role is required.")
 
-  await assertUniqueEmailAndPhone(email ?? record.email, phone ?? record.phone, id)
+  await assertUniqueEmailAndPhone(email ?? record.email, phone ?? record.phone, record.id)
 
   const next: EmployeeRecord = {
     ...record,
@@ -276,16 +279,36 @@ export async function updateEmployee(
     updatedAt: new Date().toISOString(),
   }
   const db = getAdapter()
-  await db.set(EMPLOYEES_COLLECTION, id, { ...next })
-  return toEmployee(next)
+  await db.set(EMPLOYEES_COLLECTION, record.id, { ...next })
+  return next
 }
 
-export async function deleteEmployee(id: string): Promise<{ message: string }> {
+export async function updateEmployee(
+  id: string,
+  patch: UpdateEmployeeInput,
+): Promise<EmployeeView> {
+  const record = await findRecord(id)
+  if (!record) throw new HttpError(404, "Employee not found.")
+  return toEmployee(await applyPatch(record, patch))
+}
+
+export async function updateOwnProfile(
+  userId: string,
+  patch: UpdateOwnProfileInput,
+): Promise<EmployeeRecord> {
+  const record = await findRecord(userId)
+  if (!record) throw new HttpError(404, "Employee not found.")
+  return applyPatch(record, patch)
+}
+
+export async function deleteEmployee(
+  id: string,
+): Promise<{ message: string; success: true }> {
   const record = await findRecord(id)
   if (!record) throw new HttpError(404, "Employee not found.")
   const db = getAdapter()
   await db.remove(EMPLOYEES_COLLECTION, id)
-  return { message: "Employee removed." }
+  return { message: "Employee removed.", success: true }
 }
 
 export async function updateSchedule(

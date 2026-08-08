@@ -36,6 +36,12 @@ export interface LoginResponse extends AuthSession {
   message: string
 }
 
+export type UserUpdateInput = Partial<Pick<User, "name" | "phone" | "email">>
+
+export interface UserUpdateResponse {
+  user: User
+}
+
 export interface SetupAccountResponse {
   message: string
 }

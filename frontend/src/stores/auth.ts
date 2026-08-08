@@ -10,6 +10,7 @@ interface AuthState {
   session: AuthSession | null
   phone: string | null
   setSession: (session: AuthSession, phone: string) => void
+  updateUser: (user: User) => void
   logout: () => void
 }
 
@@ -19,6 +20,12 @@ export const useAuthStore = create<AuthState>()(
       session: null,
       phone: null,
       setSession: (session, phone) => set({ session, phone }),
+      updateUser: (user) =>
+        set((state) =>
+          state.session
+            ? { session: { ...state.session, user } }
+            : state,
+        ),
       logout: () => set({ session: null, phone: null }),
     }),
     {

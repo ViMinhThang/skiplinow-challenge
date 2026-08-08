@@ -18,7 +18,6 @@ const NAV_ITEMS: AppNavItem[] = [
     label: "Profile",
     href: "/workspace/profile",
     icon: UserCogIcon,
-    disabled: true,
   },
   { label: "Chat", href: "/workspace/chat", icon: MessageSquareIcon },
 ]

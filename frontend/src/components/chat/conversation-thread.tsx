@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from "react"
 import {
+  ArrowUpIcon,
   Loader2Icon,
   MessageSquareIcon,
   RefreshCwIcon,
-  SendIcon,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -190,7 +190,7 @@ export function ConversationThread({
           {sendMutation.isPending ? (
             <Loader2Icon className="size-4 animate-spin" />
           ) : (
-            <SendIcon className="size-4" />
+            <ArrowUpIcon className="size-4" />
           )}
         </Button>
       </form>

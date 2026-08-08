@@ -4,6 +4,8 @@ import type {
   LoginResponse,
   RequestAccessCodeResult,
   SetupAccountResponse,
+  UserUpdateInput,
+  UserUpdateResponse,
   VerifyAccessCodeResponse,
 } from "@/types"
 
@@ -34,4 +36,8 @@ export async function setupAccount(
 
 export async function login(username: string, password: string) {
   return api.post<LoginResponse>(API_ENDPOINTS.login, { username, password })
+}
+
+export async function updateOwnProfile(input: UserUpdateInput) {
+  return api.patch<UserUpdateResponse>(API_ENDPOINTS.me, input)
 }

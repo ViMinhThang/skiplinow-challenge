@@ -9,6 +9,7 @@ import {
   findEmployeeByInviteToken,
   findEmployeeByUsername,
   setEmployeeCredentials,
+  updateOwnProfile,
   type EmployeeRecord,
 } from "./employees.js"
 import { findOwnerById, findOwnerByPhone, type OwnerRecord } from "./owners.js"
@@ -87,7 +88,7 @@ export async function requestOwnerAccessCode(
 export async function verifyOwnerAccessCode(
   phone: string,
   code: string,
-): Promise<AuthSessionView> {
+): Promise<AuthSessionView & { success: true }> {
   const owner = await findOwnerByPhone(phone)
   if (!owner) {
     throw new HttpError(
@@ -99,6 +100,7 @@ export async function verifyOwnerAccessCode(
   if (!valid) throw new HttpError(401, "Invalid or expired access code.")
 
   return {
+    success: true,
     message: "Logged in successfully.",
     token: signToken({ id: owner.id, role: "owner" }),
     user: toOwnerUser(owner),
@@ -202,4 +204,19 @@ export async function getCurrentUser(user: AuthUser): Promise<{ user: UserView }
   const employee = await findEmployeeById(user.id)
   if (!employee) throw new HttpError(404, "User not found.")
   return { user: toEmployeeUser(employee) }
+}
+
+export async function updateCurrentUser(
+  user: AuthUser,
+  patch: { name?: string; phone?: string; email?: string },
+): Promise<{ user: EmployeeUserView }> {
+  if (user.role !== "employee") {
+    throw new HttpError(
+      403,
+      "Owner profile details cannot be changed here.",
+    )
+  }
+
+  const updated = await updateOwnProfile(user.id, patch)
+  return { user: toEmployeeUser(updated) }
 }

@@ -1,16 +1,5 @@
-import type { Server } from "socket.io"
-
 import type { ChatMessage } from "../services/conversations.js"
-
-let io: Server | null = null
-
-export function attachChatSocket(server: Server): void {
-  io = server
-}
-
-function emitToUser(userId: string, event: string, payload: unknown): void {
-  io?.to(`user:${userId}`).emit(event, payload)
-}
+import { emitToUser } from "./io.js"
 
 export function emitChatMessage(
   conversationId: string,

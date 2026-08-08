@@ -36,6 +36,10 @@ employeesRouter.post("/get", requireAuth("owner"), async (req, res) => {
   res.json(await getEmployee(readString(req.body, "employeeId")))
 })
 
+employeesRouter.post("/delete", requireAuth("owner"), async (req, res) => {
+  res.json(await deleteEmployee(readString(req.body, "employeeId")))
+})
+
 employeesRouter.get("/:id", async (req, res) => {
   res.json(await getEmployee(String(req.params.id ?? "")))
 })

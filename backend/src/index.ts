@@ -6,8 +6,8 @@ import { createApp } from "./app.js"
 import { config } from "./config.js"
 import { firebaseReady, initFirebase } from "./firebase.js"
 import { ensureOwner } from "./services/owners.js"
-import { attachChatSocket } from "./sockets/chat-events.js"
 import { createChatSocket } from "./sockets/chat-socket.js"
+import { attachSocketServer } from "./sockets/io.js"
 
 initFirebase()
 ensureOwner().catch((err) => {
@@ -16,7 +16,7 @@ ensureOwner().catch((err) => {
 
 const app = createApp()
 const server = createServer(app)
-attachChatSocket(createChatSocket(server))
+attachSocketServer(createChatSocket(server))
 
 server.listen(config.port, () => {
   console.log(

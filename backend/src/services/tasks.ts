@@ -152,10 +152,12 @@ export async function updateTask(
   return next
 }
 
-export async function deleteTask(id: string): Promise<{ message: string }> {
+export async function deleteTask(
+  id: string,
+): Promise<{ message: string; task: TaskRecord }> {
   const task = await findRecord(id)
   if (!task) throw new HttpError(404, "Task not found.")
   const db = getAdapter()
   await db.remove(TASKS_COLLECTION, id)
-  return { message: "Task removed." }
+  return { message: "Task removed.", task }
 }

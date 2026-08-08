@@ -15,13 +15,14 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useTasks } from "@/hooks/use-tasks"
+import { useTaskRealtime, useTasks } from "@/hooks/use-tasks"
 import { STATUS_LABELS, TASK_STATUSES } from "@/lib/tasks"
 import type { Task, TaskStatus } from "@/types"
 
 type TaskFilter = "all" | TaskStatus
 
 export default function TasksPage() {
+  useTaskRealtime()
   const { data: tasks, isLoading, isError, error, refetch } = useTasks()
   const [filter, setFilter] = useState<TaskFilter>("all")
   const [formOpen, setFormOpen] = useState(false)

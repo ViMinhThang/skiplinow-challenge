@@ -7,6 +7,11 @@ import {
   listTasks,
   updateTask,
 } from "../services/tasks.js"
+import {
+  emitTaskCreated,
+  emitTaskDeleted,
+  emitTaskUpdated,
+} from "../sockets/task-events.js"
 import { readString } from "../utils/http.js"
 
 export const tasksRouter: Router = Router()
@@ -28,6 +33,7 @@ tasksRouter.post("/", requireAuth("owner"), async (req, res) => {
     },
     getAuthUser(req).id,
   )
+  emitTaskCreated(task)
   res.status(201).json(task)
 })
 
@@ -51,9 +57,12 @@ tasksRouter.patch("/:id", async (req, res) => {
     },
     getAuthUser(req),
   )
+  emitTaskUpdated(task)
   res.json(task)
 })
 
 tasksRouter.delete("/:id", requireAuth("owner"), async (req, res) => {
-  res.json(await deleteTask(String(req.params.id ?? "")))
+  const result = await deleteTask(String(req.params.id ?? ""))
+  emitTaskDeleted(result.task)
+  res.json({ message: result.message })
 })
