@@ -12,7 +12,7 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "Tasked â€” Employee Task Management",
+  title: "Tasked Employee Task Management",
   description:
     "Real-time employee task management tool for managers and employees.",
 }
