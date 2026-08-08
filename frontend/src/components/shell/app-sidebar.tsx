@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -33,7 +33,7 @@ export function AppSidebar({ navItems }: AppSidebarProps) {
     <aside className="flex h-screen w-64 shrink-0 flex-col bg-sidebar">
       <div className="flex items-center gap-2 px-4 py-4">
         <WorkflowIcon className="size-5 text-primary" />
-        <span className="font-heading text-sm font-semibold">TaskFlow</span>
+        <span className="font-heading text-sm font-semibold">Tasked</span>
         <span className="ml-auto">
           <ThemeToggle />
         </span>

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { redirect } from "next/navigation"
 import { BriefcaseBusinessIcon } from "lucide-react"
@@ -32,7 +32,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BriefcaseBusinessIcon className="size-5" />
-            TaskFlow sign in
+            Tasked sign in
           </CardTitle>
           <CardDescription>
             Sign in as an owner or an employee.

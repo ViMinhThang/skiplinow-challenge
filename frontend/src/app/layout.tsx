@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+﻿import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 
 import { Providers } from "@/components/providers"
@@ -12,7 +12,7 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "TaskFlow — Employee Task Management",
+  title: "Tasked â€” Employee Task Management",
   description:
     "Real-time employee task management tool for managers and employees.",
 }

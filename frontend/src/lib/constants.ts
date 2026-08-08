@@ -1,12 +1,12 @@
-export const API_URL =
+﻿export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api"
 
 export const SOCKET_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ?? "http://localhost:4000"
 
 export const STORAGE_KEYS = {
-  auth: "taskflow.auth",
-  phone: "taskflow.phone",
+  auth: "Tasked.auth",
+  phone: "Tasked.phone",
 } as const
 
 export const API_ENDPOINTS = {

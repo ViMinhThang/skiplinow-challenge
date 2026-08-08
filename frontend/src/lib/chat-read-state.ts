@@ -1,6 +1,6 @@
-import { readStateSchema } from "@/lib/schemas"
+﻿import { readStateSchema } from "@/lib/schemas"
 
-const KEY = "taskflow.chat.readState"
+const KEY = "Tasked.chat.readState"
 
 type ReadState = Record<string, Record<string, string>>
 

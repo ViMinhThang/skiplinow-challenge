@@ -1,4 +1,4 @@
-import axios, { AxiosError, type AxiosRequestConfig } from "axios"
+﻿import axios, { AxiosError, type AxiosRequestConfig } from "axios"
 
 import { API_URL } from "@/lib/constants"
 import { persistedSessionSchema } from "@/lib/schemas"
@@ -15,7 +15,7 @@ export class ApiError extends Error {
   }
 }
 
-const AUTH_STORAGE_KEY = "taskflow.auth"
+const AUTH_STORAGE_KEY = "Tasked.auth"
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null
