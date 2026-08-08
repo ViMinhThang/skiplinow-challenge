@@ -34,14 +34,6 @@ export async function sendAccessCodeSms(
         from: config.twilio.from,
         body: config.twilio.bodyTemplate,
       })
-    } else if (config.twilio.contentSid) {
-      // Paid accounts: registered content template with a code variable ({{1}}).
-      await client.messages.create({
-        to: phone,
-        from: config.twilio.from,
-        contentSid: config.twilio.contentSid,
-        contentVariables: JSON.stringify({ 1: code }),
-      })
     } else {
       await client.messages.create({
         to: phone,

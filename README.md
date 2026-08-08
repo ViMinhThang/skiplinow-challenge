@@ -1,4 +1,4 @@
-﻿# Skipline Now Challenge
+﻿# Skipli Now Challenge
 
 Task management app for small teams. An Express backend serves a REST API, real-time chat over Socket.IO, and persists data in Firebase Firestore. A Next.js frontend provides the web UI.
 
